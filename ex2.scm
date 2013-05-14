@@ -45,8 +45,30 @@
 		(display (y-point (end-segment s)))
 		(display "]")
 		(newline)		
-	)		
+	)
+	;线段长度
+	(define (length-segment s)
+		(sqrt (+ (square (- (x-point (start-segment s)) (x-point (end-segment s))))
+			 (square (- (y-point (start-segment s)) (y-point (end-segment s)))))))
+	;线段中点		 
 	(define (midpoint-segment s)
 		(make-point (average (x-point (start-segment s)) (x-point (end-segment s))) 
-		(average (y-point (start-segment s)) (y-point (end-segment s)))))	  
+		(average (y-point (start-segment s)) (y-point (end-segment s)))))
+	;ex 2.3
+    ;使用2端点定义矩形
+	(define (make-rectangle t-left b-right)
+		(if (= (y-point t-left) (y-point b-right))
+			(error "can't make a rectangle");如果两点构成的线段平行与x轴则无法构成矩形
+			(cons t-left b-right)))
+	(define (top-left r) (car r))
+	(define (bottom-right r) (cdr r))
+	;计算矩形的周长		
+	(define (perimeter-rectangle r)
+		(* 2
+		(+ (abs (- (y-point (top-left r)) (y-point (bottom-right r))))
+		   (abs (- (x-point (top-left r)) (x-point (bottom-right r)))))))
+	;计算矩形面积
+	(define (area-rectangle r)
+		(* (abs (- (y-point (top-left r)) (y-point (bottom-right r))))
+		   (abs (- (x-point (top-left r)) (x-point (bottom-right r))))))
 )

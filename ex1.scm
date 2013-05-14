@@ -12,10 +12,7 @@
 	(define (ex1-f n)
 		(cond ((< n 3) n)
 			(else
-				(+ (ex1-f (- n 1)) (* 2 (ex1-f (- n 2))) (* 3 (ex1-f (- n 3)))))))
-	(define (square x) (* x x))			
-	(define (even? n)
-	  (= (remainder n 2) 0))				
+				(+ (ex1-f (- n 1)) (* 2 (ex1-f (- n 2))) (* 3 (ex1-f (- n 3)))))))			
 	(define (expmod base exp m)
 	  (cond ((= exp 0) 1)
 			((even? exp)
