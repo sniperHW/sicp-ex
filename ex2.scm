@@ -102,6 +102,7 @@
 			p
 			(last-pair-imp (car p) (cdr p))))
 	;ex 2.18
+	;µÝ¹é
 	(define (reverse p)
 		(define (reverse-pair-imp front back)
 			(cond ((null? back) (list front))
@@ -109,6 +110,15 @@
 		(if (null? p)
 			p
 			(reverse-pair-imp (car p) (cdr p))))
+	;µü´ú
+	(define (reverse2 items)
+	  (define (iter things answer)
+		(if (null? things)
+			answer
+			(iter (cdr things) 
+				  (cons (car things)
+						answer))))
+	  (iter items (list)))			
 	;ex 2.19
 	(define us-coins (list 50 25 10 5 1))
 	(define uk-coins (list 100 50 20 10 5 2 1 0.5))
@@ -133,4 +143,24 @@
 				(append (process front) (same-parity-imp checker (car back) (cdr back)))))
 		(if (even? x) (same-parity-imp even? x y)
 			(same-parity-imp odd? x y)))
+	;ex 2.21
+	(define (square-list1 items)
+		(map square items))
+	;ex 2.22
+	(define (square-list2 items)
+	  (define (iter things answer)
+		(if (null? things)
+			answer
+			(iter (cdr things) 
+				  (cons (square (car things))
+						answer))))
+	  (reverse2 (iter items (list))))
+	 ;ex 2.23
+	(define (for-each proc items)
+	  (define (iter things)
+		(cond ((null? things))
+			(else
+				(proc (car things))
+				(iter (cdr things)))))
+	 (iter items))	 
 )

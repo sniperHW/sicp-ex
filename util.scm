@@ -24,5 +24,10 @@
 		(if (good-enough? guess)
 			guess
 			(sqrt-iter (improve guess))))
-	  (sqrt-iter 1.0))	
+	  (sqrt-iter 1.0))
+	(define (map proc items)
+	  (if (null? items)
+		  (list)
+		  (cons (proc (car items))
+				(map proc (cdr items)))))	  
 )
