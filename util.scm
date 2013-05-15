@@ -10,6 +10,8 @@
 	;判断是否偶数	
 	(define (even? n)
 	(= (remainder n 2) 0))
+	(define (odd? n)
+	(= (remainder n 2) 1))
 	;求平方
 	(define (square x) (* x x))
 	;开方
