@@ -162,5 +162,10 @@
 			(else
 				(proc (car things))
 				(iter (cdr things)))))
-	 (iter items))	 
+	 (iter items))
+	;ex 2.27
+	(define (deep-reverse tree)
+		(cond ((null? tree) '())
+			  ((not (pair? tree)) tree)
+              (else (reverse (map deep-reverse tree)))))	
 )
