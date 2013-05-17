@@ -52,7 +52,7 @@
 				(iter (next a) (* (term a) result))))
 		(iter a 1))
 	;ex 1.32	
-	(define (accumulate combiner null-value term a next b)
+	(define (accumulate1 combiner null-value term a next b)
 		(define (iter a result)
 			(if (> a b)
 				result
@@ -75,9 +75,9 @@
 
 	(define (identity x) x)
     (define (sum-integers a b)
-	  (accumulate + 0 identity a inc b))
+	  (accumulate1 + 0 identity a inc b))
 	(define (product-integers a b)
-	  (accumulate * 1 identity a inc b))
+	  (accumulate1 * 1 identity a inc b))
 
 	(define (sum-integers-even a b)
 	  (filtered-accumulate even? + 0 identity a inc b))
