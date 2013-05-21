@@ -272,9 +272,6 @@
 	;ex 2.41
 		(define (m-pairs1 n m)
 			(define (iter i j l ret now)
-				(display "i:")(display i)
-				(display " j:")(display j)
-				(display " l:")(display l)
 				(newline)
 				(cond ((< j 1)
 					(cons now ret))
@@ -324,6 +321,24 @@
 		)
 		(expand (map process (d-table seq n)))
 	)
+	;更简单的实现
+	(define (pick2-n seq n)
+		(define (d-table seq n)
+			(cond ((= n 0) nil)
+				  (else
+					(if (<= (length seq) n) (list seq)
+						(cons seq (d-table (cdr seq) n ))))))	
+		(define (process seq)
+			(let ((size (length seq)))
+				(cond ((<= n 1) (if (pair? seq) (list (car seq)) seq))
+					  ((<= size n) (list seq))	
+					  (else 
+						(map (lambda (x)
+								(if (pair? x)(cons (car seq) x)
+									(cons (car seq) (list x)))) (pick2-n (cdr seq) (- n 1))))))					  
+		)
+		(flatmap process (d-table seq n))
+	)	
 
 	(define (unique-pairs2 n) (pick-n (enumerate-interval 1 n) 2))
 	;(define (3-pairs n) (pick-n (enumerate-interval 1 n) 3))
