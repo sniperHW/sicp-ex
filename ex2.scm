@@ -289,8 +289,8 @@
 	;例如(a b c d)->((a b c) (a c d) (a b d) (b c d))
 	;这个简单的问题整了我一天多,对函数式语言还是不熟啊
 	(define (pick-n seq n)
-		;(d-table (1 2 3) 2)->((1 2 3) (1 2))
-		;(d-table (1 2 3) 1)->((1 2 3) (1 2) (1))
+		;(d-table (1 2 3) 1)->((1 2 3) (2 3) (3))
+		;(d-table (1 2 3) 2)->((1 2 3) (2 3))
 		;(d-table (1 2 3) 3)->((1 2 3))
 		(define (d-table seq n)
 			(cond ((= n 0) nil)
