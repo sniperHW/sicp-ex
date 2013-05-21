@@ -270,17 +270,22 @@
 	(define (prime-sum-pairs n)
 		(map make-pair-sum (filter prime-sum? (unique-pairs n))))
 	;ex 2.41
-	;	(define (m-pairs n m)
-	;		(define (iter i j l ret now)
-	;			(if (< j 1)
-	;				(cons now ret)
-	;				(accumulate
-	;				 append
-	;				 nil
-	;				 (map (lambda (x)
-	;						(iter (- i x) (- j 1) (- x 1) ret (cons x now)))
-	;					  (enumerate-interval 1 l)))))
-	;		(iter n m n nil nil))
+		(define (m-pairs1 n m)
+			(define (iter i j l ret now)
+				(display "i:")(display i)
+				(display " j:")(display j)
+				(display " l:")(display l)
+				(newline)
+				(cond ((< j 1)
+					(cons now ret))
+					(else
+					(accumulate
+					 append
+					 nil
+					(map (lambda (x)
+							(iter (- i x) (- j 1) (- x 1) ret (cons x now)))
+						  (enumerate-interval 1 l))))))
+			(iter n m n nil nil))
 	;(define (unique-pairs n) (m-pairs n 2))
 	
 	;给定一个列表,从中提取n个所有集合
@@ -301,8 +306,11 @@
 			(define (iter seq ret)
 				(cond ((not (pair? seq)) ret)
 					  ((pair? (car seq))
-						(let ((ret2 (iter (car seq) ret)))
-							 (iter (cdr seq) ret2)))	
+						;可以替换这两行看下区别
+						;(let ((ret2 (iter (car seq) ret)))
+						;	 (iter (cdr seq) ret2)))	
+						 (let ((ret2 (iter (cdr seq) ret)))
+						 	 (iter (car seq) ret2)))
 					  (else (cons seq ret)))		  	
 			)
 			(iter seq nil)
@@ -318,6 +326,6 @@
 	)
 
 	(define (unique-pairs2 n) (pick-n (enumerate-interval 1 n) 2))
-	(define (3-pairs n) (pick-n (enumerate-interval 1 n) 3))
+	;(define (3-pairs n) (pick-n (enumerate-interval 1 n) 3))
 	(define (m-pairs n m) (pick-n (enumerate-interval 1 n) m))
 )

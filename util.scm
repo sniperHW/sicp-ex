@@ -66,5 +66,7 @@
 			((predicate (car sequence))
 			 (cons (car sequence)
 				   (filter predicate (cdr sequence))))
-			(else (filter predicate (cdr sequence)))))			  
+			(else (filter predicate (cdr sequence)))))
+	(define (flatmap proc seq)
+	  (accumulate append nil (map proc seq)))			
 )
