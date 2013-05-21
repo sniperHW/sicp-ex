@@ -255,5 +255,69 @@
 	(define (reverse3 sequence)
 		(fold-right (lambda (x y) (append y (list x))) nil sequence))
 	(define (reverse4 sequence)
-		(fold-left (lambda (x y) (cons y x)) nil sequence))		
+		(fold-left (lambda (x y) (cons y x)) nil sequence))
+	;ex 2.40
+	(define (unique-pairs n)
+		(define (process i)
+			(map (lambda (j) (list i j)) (enumerate-interval 1 (- i 1)))
+		)
+	 (accumulate append nil (map process (enumerate-interval 1 n))))
+	(define (prime-sum? pair)
+		(prime? (+ (car pair) (cadr pair))))
+
+	(define (make-pair-sum pair)
+		(list (car pair) (cadr pair) (+ (car pair) (cadr pair))))	 
+	(define (prime-sum-pairs n)
+		(map make-pair-sum (filter prime-sum? (unique-pairs n))))
+	;ex 2.41
+	;	(define (m-pairs n m)
+	;		(define (iter i j l ret now)
+	;			(if (< j 1)
+	;				(cons now ret)
+	;				(accumulate
+	;				 append
+	;				 nil
+	;				 (map (lambda (x)
+	;						(iter (- i x) (- j 1) (- x 1) ret (cons x now)))
+	;					  (enumerate-interval 1 l)))))
+	;		(iter n m n nil nil))
+	;(define (unique-pairs n) (m-pairs n 2))
+	
+	;给定一个列表,从中提取n个所有集合
+	;例如(a b c d)->((a b c) (a c d) (a b d) (b c d))
+	;这个简单的问题整了我一天多,对函数式语言还是不熟啊
+	(define (pick-n seq n)
+		;(d-table (1 2 3) 2)->((1 2 3) (1 2))
+		;(d-table (1 2 3) 1)->((1 2 3) (1 2) (1))
+		;(d-table (1 2 3) 3)->((1 2 3))
+		(define (d-table seq n)
+			(cond ((= n 0) nil)
+				  (else
+					(if (<= (length seq) n) (list seq)
+						(cons seq (d-table (cdr seq) n ))))))
+		
+		;(((1 2)(3 4))(5 6))->((1 2)(3 4)(5 6))
+		(define (expand seq)
+			(define (iter seq ret)
+				(cond ((not (pair? seq)) ret)
+					  ((pair? (car seq))
+						(let ((ret2 (iter (car seq) ret)))
+							 (iter (cdr seq) ret2)))	
+					  (else (cons seq ret)))		  	
+			)
+			(iter seq nil)
+		)	
+		(define (process seq)
+			(let ((size (length seq)))
+				(cond ((<= n 1) (if (pair? seq) (list (car seq)) seq))
+					  ((<= size n) seq)	
+					  (else 
+						(map (lambda (x)(cons (car seq) x)) (pick-n (cdr seq) (- n 1))))))					  
+		)
+		(expand (map process (d-table seq n)))
+	)
+
+	(define (unique-pairs2 n) (pick-n (enumerate-interval 1 n) 2))
+	(define (3-pairs n) (pick-n (enumerate-interval 1 n) 3))
+	(define (m-pairs n m) (pick-n (enumerate-interval 1 n) m))
 )
