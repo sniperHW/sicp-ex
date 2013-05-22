@@ -270,21 +270,35 @@
 	(define (prime-sum-pairs n)
 		(map make-pair-sum (filter prime-sum? (unique-pairs n))))
 	;ex 2.41
-		(define (m-pairs1 n m)
-			(define (iter i j l ret now)
-				(newline)
-				(cond ((< j 1)
-					(cons now ret))
-					(else
-					(accumulate
-					 append
-					 nil
-					(map (lambda (x)
-							(iter (- i x) (- j 1) (- x 1) ret (cons x now)))
-						  (enumerate-interval 1 l))))))
-			(iter n m n nil nil))
+	(define (m-pairs2 n m)
+		(define (iter l j ret now)
+			(cond ((< j 1)
+				(cons now ret))
+				(else
+				(accumulate
+				 append
+				 nil
+				 (map (lambda (x)
+				 	  (cond ((< x j) nil) 
+				 			(else (iter (- x 1) (- j 1) ret (cons x now)))))
+				  	  (enumerate-interval 1 l))))))
+		(iter n m nil nil))		
 	;(define (unique-pairs n) (m-pairs n 2))
-	
+	;(((1 2)(3 4))(5 6))->((1 2)(3 4)(5 6))
+	(define (flat seq)
+		(define (iter seq ret)
+			(cond ((not (pair? seq)) ret)
+				  ((null? (car seq)) (cons nil ret))
+				  ((pair? (car seq))
+					;可以替换这两行看下区别
+					;(let ((ret2 (iter (car seq) ret)))
+					;	 (iter (cdr seq) ret2)))					  
+					 (let ((ret2 (iter (cdr seq) ret)))
+						 (iter (car seq) ret2)))
+				  (else (cons seq ret)))		  	
+		)
+		(iter seq nil)
+	)		
 	;给定一个列表,从中提取n个所有集合
 	;例如(a b c d)->((a b c) (a c d) (a b d) (b c d))
 	;这个简单的问题整了我一天多,对函数式语言还是不熟啊
@@ -296,22 +310,7 @@
 			(cond ((= n 0) nil)
 				  (else
 					(if (<= (length seq) n) (list seq)
-						(cons seq (d-table (cdr seq) n ))))))
-		
-		;(((1 2)(3 4))(5 6))->((1 2)(3 4)(5 6))
-		(define (expand seq)
-			(define (iter seq ret)
-				(cond ((not (pair? seq)) ret)
-					  ((pair? (car seq))
-						;可以替换这两行看下区别
-						;(let ((ret2 (iter (car seq) ret)))
-						;	 (iter (cdr seq) ret2)))	
-						 (let ((ret2 (iter (cdr seq) ret)))
-						 	 (iter (car seq) ret2)))
-					  (else (cons seq ret)))		  	
-			)
-			(iter seq nil)
-		)	
+						(cons seq (d-table (cdr seq) n ))))))	
 		(define (process seq)
 			(let ((size (length seq)))
 				(cond ((<= n 1) (if (pair? seq) (list (car seq)) seq))
@@ -319,7 +318,7 @@
 					  (else 
 						(map (lambda (x)(cons (car seq) x)) (pick-n (cdr seq) (- n 1))))))					  
 		)
-		(expand (map process (d-table seq n)))
+		(flat (map process (d-table seq n)))
 	)
 	;更简单的实现
 	(define (pick2-n seq n)
@@ -338,9 +337,19 @@
 									(cons (car seq) (list x)))) (pick2-n (cdr seq) (- n 1))))))					  
 		)
 		(flatmap process (d-table seq n))
-	)	
-
+	)
+	(define (pick3-n seq n)
+		;从n个中选m个->从n-1个中选m个的集合+(将头部取出插入到从n-1个中选m-1个的集合)
+		(define (process seq)
+			(cond ((<= n 0) (list nil))
+				  ((<= (length seq) n) seq)
+				  (else
+					 (cons (pick3-n (cdr seq) n) (map (lambda (x)(cons (car seq) x)) (pick3-n (cdr seq) (- n 1)))))
+				  )
+		)
+		(flat (process seq))
+	)
 	(define (unique-pairs2 n) (pick-n (enumerate-interval 1 n) 2))
 	;(define (3-pairs n) (pick-n (enumerate-interval 1 n) 3))
-	(define (m-pairs n m) (pick-n (enumerate-interval 1 n) m))
+	(define (m-pairs n m) (pick-n (enumerate-interval 1 n) m))	
 )
