@@ -271,18 +271,18 @@
 		(map make-pair-sum (filter prime-sum? (unique-pairs n))))
 	;ex 2.41
 	(define (m-pairs2 n m)
-		(define (iter l j ret now)
+		(define (iter l j ret)
 			(cond ((< j 1)
-				(cons now ret))
+				(list ret))
 				(else
 				(accumulate
 				 append
 				 nil
 				 (map (lambda (x)
 				 	  (cond ((< x j) nil) 
-				 			(else (iter (- x 1) (- j 1) ret (cons x now)))))
+				 			(else (iter (- x 1) (- j 1) (cons x ret)))))
 				  	  (enumerate-interval 1 l))))))
-		(iter n m nil nil))		
+		(iter n m nil))		
 	;(define (unique-pairs n) (m-pairs n 2))
 	;(((1 2)(3 4))(5 6))->((1 2)(3 4)(5 6))
 	(define (flat seq)
@@ -351,5 +351,19 @@
 	)
 	(define (unique-pairs2 n) (pick-n (enumerate-interval 1 n) 2))
 	;(define (3-pairs n) (pick-n (enumerate-interval 1 n) 3))
-	(define (m-pairs n m) (pick-n (enumerate-interval 1 n) m))	
+	(define (m-pairs n m) (pick-n (enumerate-interval 1 n) m))
+	;flatmapÁ·Ï°
+	(define (test1 i)
+		(define (process x)
+			(map (lambda (y) (list x y))(enumerate-interval 1 x)) 
+		)
+		(flatmap process (enumerate-interval 1 i))
+	)
+	(define (test2 i j)
+		(define (process x)
+			(map (lambda (y) (list x y))(enumerate-interval 1 j)) 
+		)
+		(flatmap process (enumerate-interval 1 i))
+	)
+	;(flatmap (lambda (x) (map square x)) (list (list 1) (list 2)))
 )
