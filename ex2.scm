@@ -494,5 +494,5 @@
 			((and (number? m1) (number? m2)) (* m1 m2))
 			(else (list m1 '* m2))))	
 	;(deriv '(x * y * (x + 3)) 'x)
-	;(deriv '(x + 3 * (x + y + 2))
+	;(deriv '(x + 3 * (x + y + 2))	
 )
