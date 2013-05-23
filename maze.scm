@@ -13,18 +13,17 @@
 	
 	(define (test-maze start target)
 		(define (is-close cur path);是否已经走过的路	
-			(= 1 (accumulate (lambda (pos sum) 
-								(if (and (= (car pos) (car cur)) (= (cadr pos) (cadr cur))) (+ sum 1) sum)) 
+			(= 1 (accumulate 
+					(lambda (pos sum) 
+					(if (and (= (car pos) (car cur)) (= (cadr pos) (cadr cur))) (+ sum 1) sum)) 
 				 0 path)))
 		;检查是否合法路径
 		(define (check cur dir path)
 			(let ((x (+ (car dir) (car cur)))
 				  (y (+ (cadr dir) (cadr cur))))
 			 (cond ((is-close (list x y) path) nil)
-				   ((or (< x 0) (< y 0)) nil);越界
 				   ((= (get-x-y maze x y) 1) nil);阻挡
-				   (else (list x y)))))   ;返回下一步合法的坐标
-	
+				   (else (list x y)))))   ;返回下一步合法的坐标	
 		(define (iter cur-step path)
 			;(display cur-step)(newline)
 			(define (move dir)
@@ -39,9 +38,7 @@
 					  (else (let ((left (move 2))) (cond ((not (null? left)) left)
 					  (else (let ((right (move 3))) (cond ((not (null? right)) right)
 					  ;无法到达目的地
-					  (else nil))))))))))))		
-				  )
-			)
+					  (else nil))))))))))))))
 		)
 		(reverse (iter start nil))
 	)
