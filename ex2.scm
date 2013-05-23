@@ -366,4 +366,133 @@
 		(flatmap process (enumerate-interval 1 i))
 	)
 	;(flatmap (lambda (x) (map square x)) (list (list 1) (list 2)))
+	;2.31引号
+	;'后的对象表示对象应该作为数据而不是该求值的表达试对待
+	;(accumulate (lambda (x y) (cons (list x) y)) nil ''a)
+	;''a 表示一个列表其内容为(quote a)与(list 'quote 'a),'(quote a)等价
+	;(cons 'quote 'a)->(quote . a)
+	;(cons 'quote (list 'a))-> ''a
+	;(accumulate (lambda (x y) (cons (list x) y)) nil (car '('a))
+	;'('a)表示列表中有一个元素为('a) (car '('a)) 等价于 ''a
+	;比较''a 于 '('a)的区别(car (cdr ''a)) = (car (cdr (car '('a)))) = 'a
+	
+	;ex 2.56
+	
+	(define (variable? x) (symbol? x))
+
+	(define (same-variable? v1 v2)
+	  (and (variable? v1) (variable? v2) (eq? v1 v2)))
+
+	;(define (make-sum a1 a2) (list '+ a1 a2))
+
+	;(define (make-product m1 m2) (list '* m1 m2))
+
+	(define (sum? x)
+	  (and (pair? x) (eq? (car x) '+)))
+
+	(define (addend s) (cadr s))
+
+	(define (augend s) (caddr s))
+
+	(define (product? x)
+	  (and (pair? x) (eq? (car x) '*)))
+
+	(define (multiplier p) (cadr p))
+
+	(define (multiplicand p) (caddr p))
+	(define (make-sum a1 a2)
+	  (cond ((=number? a1 0) a2)
+			((=number? a2 0) a1)
+			((and (number? a1) (number? a2)) (+ a1 a2))
+			(else (list '+ a1 a2))))
+
+	(define (=number? exp num)
+	  (and (number? exp) (= exp num)))
+
+	(define (make-product m1 m2)
+	  (cond ((or (=number? m1 0) (=number? m2 0)) 0)
+			((=number? m1 1) m2)
+			((=number? m2 1) m1)
+			((and (number? m1) (number? m2)) (* m1 m2))
+			(else (list '* m1 m2))))
+	;用base^expon表示base的expon次幂
+	(define (make-exponentiation base expon)
+		(if (number? expon)
+			(cond ((= expon 0) 1)
+				  ((= expon 1) base)	
+				  (else (list '^ base expon)))
+			(list '^ base expon))	  
+	)
+	(define make-exp make-exponentiation)
+	(define (exponentiation? e)
+		(if (pair? e)(eq? (car e) '^)#f))
+	(define is-exp? exponentiation?)
+	(define (base e)
+		(if (not is-exp?) (error "e is not a exponentiation")
+			(car (cdr e))))			
+	(define (exponent e);获得指数
+		(if (not is-exp?) (error "e is not a exponentiation")
+			(car (cddr e))))		
+	(define (exponent-dec e);指数-1
+		(let ((expon (exponent e)))
+			(if (number? expon) (make-exp (base e) (- expon 1))
+				(make-exp (base e) (list '- expon 1)))))	
+	(define (deriv exp var)
+	  (cond ((number? exp) 0)
+			((variable? exp)
+			 (if (same-variable? exp var) 1 0))
+			((sum? exp)
+			 (make-sum (deriv (addend exp) var)
+					   (deriv (augend exp) var)))
+			((product? exp)
+			 (make-sum
+			   (make-product (multiplier exp)
+							 (deriv (multiplicand exp) var))
+			   (make-product (deriv (multiplier exp) var)
+							 (multiplicand exp))))
+			;对幂的处理
+			((is-exp? exp)
+			  (make-product (make-product (exponent exp) (exponent-dec exp)) 
+			  (deriv (base exp) var))	
+			)
+			(else
+			 (error "unknown expression type -- DERIV" exp))))
+	
+	;ex 2.57
+	(define (augend s)
+		(if (> (length (cddr s)) 1) (append (list '+) (cddr s))
+			(caddr s)))
+	(define (multiplicand p)
+			(if (> (length (cddr p)) 1) (append (list '*) (cddr p))
+			(caddr p)))
+	;ex 2.58		
+	;中缀表示
+	(define (sum? x)
+	  (and (pair? x) (eq? (cadr x) '+)))
+	(define (addend s) (car s))
+	(define (augend s)		
+		(if (> (length (cddr s)) 1) (cddr s)
+			(caddr s)))
+
+	(define (product? x)
+	  (and (pair? x) (eq? (cadr x) '*)))
+	(define (multiplier p) (car p))
+	(define (multiplicand p)			
+		(if (> (length (cddr p)) 1) (cddr p)
+			(caddr p)))
+	
+	(define (make-sum a1 a2)
+	  (cond ((=number? a1 0) a2)
+			((=number? a2 0) a1)
+			((and (number? a1) (number? a2)) (+ a1 a2))
+			(else (list a1 '+ a2))))
+
+	(define (make-product m1 m2)
+	  (cond ((or (=number? m1 0) (=number? m2 0)) 0)
+			((=number? m1 1) m2)
+			((=number? m2 1) m1)
+			((and (number? m1) (number? m2)) (* m1 m2))
+			(else (list m1 '* m2))))	
+	;(deriv '(x * y * (x + 3)) 'x)
+	;(deriv '(x + 3 * (x + y + 2))
 )
