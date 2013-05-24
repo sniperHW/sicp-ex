@@ -494,5 +494,145 @@
 			((and (number? m1) (number? m2)) (* m1 m2))
 			(else (list m1 '* m2))))	
 	;(deriv '(x * y * (x + 3)) 'x)
-	;(deriv '(x + 3 * (x + y + 2))	
+	;(deriv '(x + 3 * (x + y + 2))
+	;ex 2.59
+	(define (element-of-set? x set)
+	  (cond ((null? set) false)
+			((equal? x (car set)) true)
+			(else (element-of-set? x (cdr set)))))
+
+	(define (adjoin-set x set)
+	  (if (element-of-set? x set)
+		  set
+		  (cons x set)))
+
+	(define (intersection-set set1 set2)
+	  (cond ((or (null? set1) (null? set2)) '())
+			((element-of-set? (car set1) set2)
+			 (cons (car set1)
+				   (intersection-set (cdr set1) set2)))
+			(else (intersection-set (cdr set1) set2))))
+	
+	(define (union-set set1 set2)
+		(define (iter newset otherset)
+			(if (null? otherset) newset
+				(iter (adjoin-set (car otherset) newset) (cdr otherset)))
+		)
+		(iter set1 set2)
+	)
+	;ex 2.61
+	(define (adjoin-set x set)
+		(define (imp front back x)
+			(cond ((null? back)(append front (list x)))
+				  ((= x (car back))(append front back));x已经在set中
+				  ((< x (car back))(append (append front (list x)) back))
+				  (else (imp (append front (list (car back))) (cdr back) x)))
+		)
+		(imp nil set x)
+	 )
+	 
+	 ;ex 2.62
+	(define (union-set set1 set2)
+		(define (imp set1 set2 ret)
+			(cond ((null? set1) (append ret set2))
+				  ((null? set2) (append ret set1))
+				  (else 
+				   (let ((b1 (car set1))(b2 (car set2)))
+						(cond ((= b1 b2)(imp (cdr set1) (cdr set2) (append ret (list b1))))
+							  ((< b1 b2)(imp (cdr set1) set2 (append ret (list b1))))
+							  (else (imp set1 (cdr set2) (append ret (list b2)))))))))
+		(imp set1 set2 nil)
+	)
+	
+	;ex 2.63
+	;; BINARY TREES
+	(define (entry tree) (car tree))
+
+	(define (left-branch tree) (cadr tree))
+
+	(define (right-branch tree) (caddr tree))
+
+	(define (make-tree entry left right)
+	  (list entry left right))
+
+	(define (element-of-set? x set)
+	  (cond ((null? set) false)
+			((= x (entry set)) true)
+			((< x (entry set))
+			 (element-of-set? x (left-branch set)))
+			((> x (entry set))
+			 (element-of-set? x (right-branch set)))))
+
+	(define (adjoin-set x set)
+	  (cond ((null? set) (make-tree x '() '()))
+			((= x (entry set)) set)
+			((< x (entry set))
+			 (make-tree (entry set) 
+						(adjoin-set x (left-branch set))
+						(right-branch set)))
+			((> x (entry set))
+			 (make-tree (entry set)
+						(left-branch set)
+						(adjoin-set x (right-branch set))))))
+
+
+	;; EXERCISE 2.63
+	;先处理左子树再处理右子树,双递归
+	(define (tree->list-1 tree)
+	  (if (null? tree)
+		  '()
+		  (append (tree->list-1 (left-branch tree))
+				  (cons (entry tree)
+						(tree->list-1 (right-branch tree))))))
+	
+	
+	;先处理右子树再处理左子树,尾递归(迭代)效率更高
+	(define (tree->list-2 tree)
+	  (define (copy-to-list tree result-list)
+		(if (null? tree)
+			result-list
+			(copy-to-list (left-branch tree)
+						  (cons (entry tree)
+								(copy-to-list (right-branch tree)
+											  result-list)))))
+	  (copy-to-list tree '()))	
+	 
+	 ;对应图2-16 1
+	 (define l_tree1 
+	 (adjoin-set 11 (adjoin-set 5
+	 (adjoin-set 1 (adjoin-set 9 (adjoin-set 3 (adjoin-set 7 nil)))))))
+	 
+	 ;对应图2-16 2
+	 (define l_tree2 
+	 (adjoin-set 11 (adjoin-set 5
+	 (adjoin-set 9 (adjoin-set 7 (adjoin-set 1 (adjoin-set 3 nil)))))))
+	 
+	 ;对应图2-16 3
+	 (define l_tree3 
+	 (adjoin-set 11 (adjoin-set 7
+	 (adjoin-set 1 (adjoin-set 9 (adjoin-set 3 (adjoin-set 5 nil)))))))
+	 
+	 ;ex 2.64
+	 ;如果输入列表有序可以构造一棵排序二叉树,否则构建的不是排序二叉树
+	 ;自底向上的构造,首先构造左右子树,将左右子树向上构造成根树 
+	 ;对列表中的每个元素都要执行一次make-tree,所以时间复杂度O(n)
+	(define (partial-tree elts n)
+	  (if (= n 0)
+		  (cons '() elts)
+		  (let ((left-size (quotient (- n 1) 2)))
+			(let ((left-result (partial-tree elts left-size)))
+			  (let ((left-tree (car left-result))
+					(non-left-elts (cdr left-result))
+					(right-size (- n (+ left-size 1))))
+				(let ((this-entry (car non-left-elts))
+					  (right-result (partial-tree (cdr non-left-elts)
+												  right-size)))
+				  (let ((right-tree (car right-result))
+						(remaining-elts (cdr right-result)))
+					;构建树,并放在列表的表头,remaining-elts表示还没有被添加到树中的剩余元素
+					(cons (make-tree this-entry left-tree right-tree)
+						  remaining-elts))))))))
+	(define (list->tree elements)
+	  (car (partial-tree elements (length elements))))						  
+	 
 )
