@@ -1,6 +1,6 @@
 (begin
 	(load "ex2.scm")
-	
+	(define (make-maze)
 	(define (for-each proc things)
 		(cond ((null? things) nil)
 			  (else	
@@ -55,5 +55,10 @@
 					  (accumulate (lambda (dir p) (append (move dir) p)) nil (enumerate-interval 0 3))))
 		)
 		(map reverse (iter start nil))
-	)	
+	)
+	(lambda (op start target)
+		(cond ((eq? op 'find-path-all) (find-path-all start target))
+			  ((eq? op 'find-path-one) (find-path-one start target))
+			  (else "bad op"))
+	))	
 )	
