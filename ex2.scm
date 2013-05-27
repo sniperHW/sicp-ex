@@ -634,5 +634,39 @@
 						  remaining-elts))))))))
 	(define (list->tree elements)
 	  (car (partial-tree elements (length elements))))						  
-	 
+	
+	;ex 2.69 
+	(define (build-huffman pairs)
+		(define (build leaf-set)
+			(cond ((= (length leaf-set) 1) (car leaf-set))
+				  (else 
+					(build
+						(adjoin-set  
+						(make-code-tree (car leaf-set) (car (cdr leaf-set)))
+						(cdr (cdr leaf-set))))			
+				  ))
+		)
+		(build (make-leaf-set pairs)))
+	
+	;ex 2.68 
+	(define (encode-symbol symbol tree)
+		(define (element-of-set? x set)
+		  (cond ((null? set) false)
+				((eq? x (car set)) true)
+				(else (element-of-set? x (cdr set)))))	
+		(define (iter tree ret)
+			(cond ((leaf? tree) ret)  ;到达叶节点,返回
+				  (else
+					(let ((left (left-branch tree))(right (right-branch tree)))
+						 (cond ((element-of-set? symbol (symbols left))
+								 (iter left (cons 0 ret)))
+							   ((element-of-set? symbol (symbols right))
+								 (iter right (cons 1 ret)))
+							   (else (error "bad symbol"))))		
+				  )	
+			)			  
+		)
+		(reverse (iter tree '()))
+	)
+	;ex 2.71按本章中使用的构造方法, 词频最高的用1位,最低的用n-1位	
 )
