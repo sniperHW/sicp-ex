@@ -3,6 +3,8 @@
 	;红黑树节点的定义
 	;节点结构如下
 	;(key (val (color (parent (left (right nil))))))
+	(define nil (list 0 0 'black '() '() '()))
+	
 	(define (make-rb-node key val)
 		(list key val 'red '() '() '())
 	)
@@ -26,19 +28,22 @@
 		(cadddr rbnode))	
 	
 	(define (set-parent! rbnode parent)
-		(set-car! (cdddr rbnode) parent))
+		(if (not (equal? rbnode nil))
+		(set-car! (cdddr rbnode) parent)))
 		
 	(define (get-left rbnode)
 		(car (cddddr rbnode)))
 	
 	(define (set-left! rbnode left)
-		(set-car! (cddddr rbnode) left))
+		(if (not (equal? rbnode nil))
+		(set-car! (cddddr rbnode) left)))
 		
 	(define (get-right rbnode)
 		(cadr (cddddr rbnode)))
 		
 	(define (set-right! rbnode right)
-		(set-car! (cdr (cddddr rbnode)) right))
+		(if (not (equal? rbnode nil))
+		(set-car! (cdr (cddddr rbnode)) right)))
 	
 	(define test-node (make-rb-node 1 2))
 	
@@ -58,15 +63,13 @@
 			  (else 1)))
 	
 	;红黑树定义
-	;(root (size (cmp-function (dummy-node nil))))
+	;(root (size (cmp-function nil)))
 	(define (make-rbtree comp-function)
-		(define dummy-node (make-rb-node 0 0))
-		(set-color! dummy-node 'black)
-		(list dummy-node 0 comp-function dummy-node)
+		(list nil 0 comp-function nil)
 	)
 	
-	(define (get-dummy rbtree)
-		(cadddr rbtree))
+	;(define (get-dummy rbtree)
+	;	(cadddr rbtree))
 	
 	(define (rbtree-get-root rbtree)
 		(car rbtree))
@@ -83,10 +86,10 @@
 	(define (rbtree-insert rbtree key val)
 		(define rbnode (make-rb-node key val))
 		(define child_link '())
-		(define parent (get-dummy rbtree))
+		(define parent nil)
 		(define cmp (rbtree-cmp-func rbtree))
 		(define (iter cur)
-			(if (equal? cur (get-dummy rbtree)) #t
+			(if (equal? cur nil) #t
 				(begin
 					(set! parent cur)
 					(let ((ret (cmp key (get-key cur))))
@@ -99,9 +102,11 @@
 				)))
 		(if (not (iter (rbtree-get-root rbtree))) #f
 			(begin
-				(set-left! rbnode (get-dummy rbtree))
-				(set-right! rbnode (get-dummy rbtree))
+				(set-left! rbnode nil)
+				(set-right! rbnode nil)
 				(set-parent! rbnode parent)
+				;(if (and (not (null? child_link)) (not (equal? (get-dummy rbtree) child_link))) 				
+				;	(set-car! child_link rbnode))
 				(if (not (null? child_link)) (set-car! child_link rbnode))
 				(set-car! (cdr rbtree) (+ 1 (rbtree-get-size rbtree)))
 				(if (= 1 (rbtree-get-size rbtree))(rbtree-set-root! rbtree rbnode))
@@ -113,7 +118,7 @@
 	(define (rbtree-find-imp rbtree key)
 		(define (iter node)
 			(define cmp (rbtree-cmp-func rbtree))
-			(if (equal? node (get-dummy rbtree))'()
+			(if (equal? node nil)'()
 				(let ((ret (cmp key (get-key node))))
 					(cond ((= 0 ret) node)
 						  ((= -1 ret) (iter (get-left node)))
@@ -130,12 +135,11 @@
 	(define (rbtree-remove rbtree key)
 		(define rbnode (rbtree-find-imp rbtree key))
 		(if (null? rbnode)'()
-			(begin (rbtree-delete rbtree rbnode)
-					rbnode))
+			(rbtree-delete rbtree rbnode))
+		rbnode	
 	)
 	
 	(define (get-delete-node rbtree rbnode)
-		(define nil (get-dummy rbtree))
 		(cond ((and (equal? (get-left rbnode) nil)
 					(equal? (get-right rbnode) nil))rbnode)
 			  ((not (equal? (get-right rbnode) nil)) (minimum rbtree (get-right rbnode)))		
@@ -143,7 +147,6 @@
 	)
 	
 	(define (rbtree-delete rbtree rbnode)
-		(define nil (get-dummy rbtree))
 		(define x (get-delete-node rbtree rbnode))
 		(define parent (get-parent x))
 		(define link '())
@@ -151,10 +154,11 @@
 		(define old_color 'red)
 		(if (equal? x (get-left parent)) (set! link (cddddr parent))
 			(set! link (cdr (cddddr parent))))
+		(if (equal? x (get-left parent)) (set! z (get-left parent))
+			(set! z (get-right parent)))		
 		(cond ((not (equal? (get-left x) nil)) (set-car! link (get-left x)))
 			  ((not (equal? (get-right x) nil)) (set-car! link (get-right x)))
-			  (else (set! link nil)))
-		(set! z link)
+			  (else (set-car! link nil)))
 		(if (not (equal? z nil))(set-parent! z parent))
 		(set-parent! x nil)
 		(set-left! x nil)
@@ -181,7 +185,7 @@
 		(set-car! (cdr rbtree) (- 1 (rbtree-get-size rbtree)))
 		(if (= 0 (rbtree-get-size rbtree))(rbtree-set-root rbtree nil)
 			(if (and (not (equal? z nil))(eq? old_color 'black))
-				(delete-fix-up rbtree z)))
+				(delete-fix-up rbtree z)))		
 	)
 		
 	(define (rotate-left rbtree rbnode)
@@ -316,7 +320,6 @@
 	)
 	
 	(define (minimum rbtree rbnode)
-		(define nil (get-dummy rbtree))
 		(define (minimum-imp rbnode)
 			(if (equal? (get-left rbnode) nil)
 				rbnode
@@ -324,7 +327,6 @@
 		(minimum-imp rbnode))
 		
 	(define (maxmum rbtree rbnode)
-		(define nil (get-dummy rbtree))
 		(define (maxmum-imp rbnode)
 			(if (equal? (get-right rbnode) nil)
 				rbnode
@@ -332,7 +334,6 @@
 		(maxmum-imp rbnode))		
 			
 	(define (successor rbtree rbnode)
-		(define nil (get-dummy rbtree))
 		(define (iter parent node)
 			(if (and (not (equal? parent nil))
 				     (equal? (get-right parent) node))
@@ -343,7 +344,6 @@
 			(iter (get-parent rbnode) rbnode)))	
 			
 	(define (node-next rbtree rbnode)
-		(define nil (get-dummy rbtree))
 		(if (null? rbnode) '()
 			(begin
 				(let ((succ (successor rbtree rbnode)))
