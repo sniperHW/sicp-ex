@@ -1,9 +1,8 @@
 (begin
 	;一个简单的,用continuation实现的协程接口
-	(define current-coro #f);当前获得运行权的coro
-	(define (get-current-coro) current-coro)
-	(define (set-current-coro! current) (set! current-coro current))
+	(define current-coro '());当前获得运行权的coro
 	
+	;创建coro并返回,fun不会立即执行，由start-run执行
 	(define (make-coro fun)
 		(define coro (list #f #f))
 		(let ((ret (call/cc (lambda (k) (begin
@@ -14,7 +13,7 @@
 				;如果下面代码被执行,则是从switch-to调用过来的
 				(begin (let ((result (fun ret)))
 					   (set-context! coro #f)
-					   (set-current-coro! (get-from coro))			
+					   (set! current-coro (get-from coro))			
 					   ((get-context (get-from coro)) result)));fun执行完成后要回到调用者处
 			)
 		)
@@ -24,21 +23,36 @@
 	(define (set-context! coro context) (set-car! coro context))		
 	(define (get-from coro) (cadr coro))
 	(define (set-from! coro from) (set-car! (cdr coro) from))
+	
 	(define (switch-to from to arg)
 		(let ((ret
 			  (call/cc (lambda (k)
 					(set-from! to from)
-					(set-current-coro! to)
+					(set! current-coro to)
 					(set-context! from k)
 					((get-context to) arg)
 					arg))))
 		 ret)
 	)
 	
+	;启动一个coro的运行，那个coro将会从它在创建时传入的函数开始运行
+	(define (start-run coro . arg)
+		(if (null? current-coro) (set! current-coro (make-coro #f)))
+		(switch-to current-coro coro arg)
+	)
+	
+	;将运行权交给另一个coro
+	(define (yield coro . arg)
+		(switch-to current-coro coro arg))
+	
+	;将运行权还给原来把运行权让给自己的那个coro
+	(define (resume . arg)
+		(switch-to current-coro (get-from current-coro) arg)
+	)
+	
 	(define (fun-coro-a arg)
-		(define coro-new (make-coro fun-coro-b))
 		(display "fun-coro-a\n")
-		(switch-to (get-current-coro) coro-new #f)
+		(yield (make-coro fun-coro-b))
 		(display "coro-a end\n")
 		"end"
 	)
@@ -50,35 +64,30 @@
 	)
 	
 	(define (test-coro1)
-		(define coro-new (make-coro fun-coro-a))
-		(define coro-self (make-coro #f))
-		(switch-to coro-self coro-new #f)
+		(start-run (make-coro fun-coro-a))
 	)
 	
 	(define (fun-coro-a-2 arg)
-	(define coro-new (make-coro fun-coro-b-2))
-	(define (iter)
-		(display "fun-coro-a\n")
-		(switch-to (get-current-coro) coro-new #f)
+		(define coro-new (make-coro fun-coro-b-2))
+		(define (iter)
+			(display "fun-coro-a\n")
+			(yield coro-new)
+			(iter)
+		)
 		(iter)
-	)
-	(iter)
 	)
 	
 	(define (fun-coro-b-2 arg)
-		(define coro-self (get-current-coro))
 		(define (iter)
 			(display "fun-coro-b\n")
-			(switch-to  coro-self (get-from coro-self) #f)
+			(resume)
 			(iter)
 		)
 		(iter)
 	)
 	
 	(define (test-coro2)
-		(define coro-new (make-coro fun-coro-a-2))
-		(define coro-self (make-coro #f))
-		(switch-to coro-self coro-new coro-new)
-	)	
+		(start-run (make-coro fun-coro-a-2))
+	)
 	
 )
