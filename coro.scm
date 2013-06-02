@@ -37,18 +37,20 @@
 	
 	;启动一个coro的运行，那个coro将会从它在创建时传入的函数开始运行
 	(define (start-run coro . arg)
-		(if (null? current-coro) (set! current-coro (make-coro #f)))
-		(switch-to current-coro coro arg)
+		(let ((param (if (null? arg) arg (car arg))))
+			(if (null? current-coro) (set! current-coro (make-coro #f)))
+			(switch-to current-coro coro param))
 	)
 	
 	;将运行权交给另一个coro
 	(define (yield coro . arg)
-		(switch-to current-coro coro arg))
+		(let ((param (if (null? arg) arg (car arg))))
+			(switch-to current-coro coro param)))
 	
 	;将运行权还给原来把运行权让给自己的那个coro
 	(define (resume . arg)
-		(switch-to current-coro (get-from current-coro) arg)
-	)
+		(let ((param (if (null? arg) arg (car arg))))
+			(switch-to current-coro (get-from current-coro) param)))
 	
 	(define (fun-coro-a arg)
 		(display "fun-coro-a\n")
@@ -71,7 +73,7 @@
 		(define coro-new (make-coro fun-coro-b-2))
 		(define (iter)
 			(display "fun-coro-a\n")
-			(yield coro-new)
+			(display (yield coro-new 1))(newline)
 			(iter)
 		)
 		(iter)
@@ -80,7 +82,7 @@
 	(define (fun-coro-b-2 arg)
 		(define (iter)
 			(display "fun-coro-b\n")
-			(resume)
+			(display(resume 2))(newline)
 			(iter)
 		)
 		(iter)
