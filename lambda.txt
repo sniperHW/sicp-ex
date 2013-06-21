@@ -1,42 +1,218 @@
- pred = λnfx.((n (λgh. h (g f)) (λu. x)) (λu. u))
- 
- pred 0 = λnfx.((n (λgh.h (g f)) (λu.x)) (λu.u)) λfx.x
-		= λfx.((λfx.x (λgh.h (g f)) (λu.x)) (λu.u))
-        = λfx.(((λx.x) (λu.x)) (λu.u))
-        = λfx.((λu.x) (λu.u))
-        = λfx.x
-        = 0
- 
- 分析关键部分:((n (λgh.h (g f)) (λu.x)) (λu.u))
- 对n=1,2,3...分别有
-   (((λgh.h (g f)) (λu.x)) (λu.u))
- = ((λh.h ((λu.x) f)) (λu.u))
- = ((λh.h x) (λu.u))
- = ((λu.u) x)
- = x
- 
-  ((λgh.h (g f) ((λgh.h (g f)) (λu.x))) (λu.u))
- =(((λgh.h (g f)) (λh.h x)) (λu.u))
- 用z替换(λh.h x)中的h
- =(((λgh.h (g f)) (λz.z x)) (λu.u))
- =((λh.h ((λz.z x) f)) (λu.u))
- =((λh.h (f x)) (λu.u))
- =((λu.u) (f x))
- =(f x)
- 
- 可见((n (λgh.h (g f)) (λu.x))对于大于0的情况分别等于
- (λh.h x), ((λh.h (f x)), ((λh.h (f (f x))) ....
- 
- (λu.u)的作用就是将第二个项 x, (f x), (f (f x)) ........提取出来:
- 
- 整个pred的核心就在((n (λgh.h (g f)) (λu.x))
+Lambda项的语法定义:
 
- 这里，为了理解方便，将0临时编码为(λh.h x),也就是第一次应用(λgh.h (g f)) (λu.x)
- 后得到0,然后用(λgh.h (g f))作为后继函数作用在0上得到了1,(λh.h (f x)),
- 再次应用得到2,(λh.h (f (f x)))...
- 
- 这就说明了为什么pred能获得n-1,n的丘奇编码中总共有n个f,总共产生n个(λgh.h (g f)),
- 其中最右边一个应用到(λu.x)上得到0，剩下的n-1个相当于从0开始应用succ(在这里succ是(λgh.h (g f)) )
- n-1次，所以得到了n-1.
- 
- 
+Lambda项的定义是递归的:
+
+1.	<表达式> ::= <标识符>
+2.	<表达式> ::=(λ<标识符> .<表达式>)
+3.	<表达式> ::=(<表达式> <表达式>)
+
+1)	一个变量是lambda项
+2)	如果s和z都是lambda项,那么(s z)是lambda项,这被称为将s应用到z.
+3)	如果s是lambda项,那么lambda抽象λx.s是一个lambda项.
+
+Lambda抽象是右结合的, λx1.x2…xn.s 等同于λx1.( λx2. … (λxn.s))
+应用是左结合的s1 s2 s3 … sn 等同于 (((s1 s2) s3) … sn)
+
+变量
+
+如果一个lambda项中的所有变量都是绑定的这个lambda项被称为闭合的(closed)或组合子.
+
+alpha变换
+
+如果一个项s可以通过将项t中的绑定变量重命名而得到那么s和t被称为alpha等价的.
+
+例如: λx.yx   α=  λz.yz  α=  λz.xz
+
+所有alpha等价的项都被认为是同一个项.  
+
+beta变换和替换
+
+lambda演算是关于函数的理论，应用可被认为是一个二元操作符。
+
+(λx.s)t ≡s[t/x]
+
+s[t/x]表示用t替换掉项s中x的所有自由出现.(注意s中x的自由出现在λx.s是绑定的)
+
+对于任意的lambda项 f 和 u 如果f u ≡u 那么 u被称为 f 的不动点.
+
+如果f 对于任意lambda项目都有s(f s) ≡f s，f称为不动点组合子.
+也就是说fs 是 s的不动点.
+
+先看第一个不动点算子Θ:AA
+
+其中A ≡λxy.y(xxy)
+
+A作用在A上会产生这样一个项λf.f(AAf) 
+
+(λf.f(AAf))s ≡s(AAs)
+
+再看一下Y算子 Y ≡λf.( λx.f(xx))( λx.f(xx))
+对右边规约得到 f(λx.f(xx) λx.f(xx))
+f(λx.f(xx) λx.f(xx))等价与f( (λu.( λx.u(xx) λx.u(xx)) f))
+
+所以Y等价于
+λf.f( (λu.( λx.u(xx) λx.u(xx)) f))
+其中λu.( λx.u(xx) λx.u(xx)就是Y算子本身
+即λf.f(Yf)
+
+可见不动点算子都可规约成如下形式: λf.f(X f)  其中X是算子本身
+
+构造一个s使得对于任何的st有ss
+
+对布尔类型的编码
+
+true ≡λx. λy.x
+false ≡λx. λy.y
+if ≡λv.λt.λf.v t f
+
+证明:if true ≡true
+
+if true    ≡(λv.λt.λf.v t f)( λx. λy.x) 
+         ≡(λt.λf.( λx. λy.x) t f)
+         ≡(λt.λf.λy.t f)
+         ≡(λt.λf.λy.t f)
+≡λf.λy.f
+≡true
+If  false = false的证明省略.
+
+定义逻辑操作符and  or  not
+
+and: (λx.λy.if x y false)  
+
+and true false  ≡(if true false false)
+             ≡false
+and true true  ≡(if true true false)
+             ≡true
+and false true  ≡(if false true false)
+             ≡false
+and false false  ≡(if false false false)
+             ≡false
+
+or: (λx. λy.if x true y)
+
+or true true ≡(if true true true)
+≡true
+or true false ≡(if true true false)
+≡true
+or false true ≡(if false true true)
+≡true
+or false false ≡(if false true false)
+≡false
+
+
+not: (λx.if x false true)
+not true ≡(if true false true)
+	   ≡false
+not false ≡(if false false true)
+	   ≡true
+
+对pair编码
+
+(x,y)  ≡ λt if t x y 
+mkpair ≡λx.λy.λt if t x y
+fst ≡λp.p true
+snd ≡λp.p false
+
+fst (mkpair m n) ≡fst (λt.if t m n)
+            ≡(λt.if t m n) true
+			 ≡if true m n
+			 ≡m
+
+snd (mkpair m n) ≡fst (λt.if t m n)
+            ≡(λt.if t m n) false
+			 ≡if false m n
+			 ≡n 
+
+丘奇数
+
+在纯lambda演算中一切东西都是函数,所以自然数也被编码成函数，就像在冯诺依曼结构的计算机
+中，一切的东西都是二进制位，所以自然数也就被编码成二进制位.
+
+丘奇数被这样编码,它是一个接受f和x的函数,将它应用在f和x上得到的结果是将f应用在x上n次.
+
+0 ≡ λf.λx.x
+1 ≡ λf.λx.f x
+2 ≡ λf.λx.f (f x)
+3 ≡ λf.λx.f (f (f x))
+…
+
+判断一个丘奇数是不是0 
+
+iszero的作用是将它应用到n上，如果n是0返回true,否则返回false.
+可以这样考虑，将n应用到f和true上，得到的结果是f对true应用n次,
+我们希望当f对true应用0次时返回true,大于0次返回false.也就是说
+应该让f应用到任何参数上都返回false,我们可以让f≡λx.false.
+这样,iszero就可以定义成:
+	iszero≡λn.n λx.false true
+
+当n≡0时,
+  n λx.false true 
+≡ (λf.λx.x) λx.false true 
+≡ λx.x true ≡ true
+
+当n=1,2,3...有
+
+  n λx.false true 
+≡ (λf.λx.f x) λx.false true 
+≡ (λu.λx.false u) true 
+≡ λx.false true 
+≡ false
+...
+
+
+丘奇数的后继
+
+将丘奇数的后继succ应用到n上,将的到n+1,对于一个丘奇数n,(n f x)可以获得将f应用到x上n次
+的结果,只要用f再一次应用到这个结果上，就可以得到n+1,所以succ表示为:
+	succ ≡ λn.λf.λx.f (n f x)
+
+接着看看如何定义plus，它接受两个丘奇数n,m作为参数，将plus应用到这两个参数上将得到
+n+m.	
+
+继续从(n f x)上着手,n+m相当于将f在(n f x)上再应用m次,从m的表示上看，已经有了f对
+x的m次应用,只要将其中的x换成(n f x)就可以得到f对x的n+m次应用所以plus定义如下:
+	plus ≡ λn.λm.λf.λx.m f (n f x)
+
+还可以从另外一个观点来看plus,就是对n应用m次succ,这里先假设m是2,那么succ (succ n) ≡ n + 2
+在看一下2的编码形式:2 ≡ λf.λx.f (f x),也就是说要得到n+2只要,只要将2应用到succ 和 n上就可以了
+2 succ n ≡ n + 2,所以plus还可以表示成:
+	λn.λm.m add1 n
+	
+	
+丘奇数的前驱
+
+丘奇数的前驱pred被定义成,pred n当n=0时返回0,否则返回n-1.例如对于3 ≡ λf.λx.f (f (f x)),
+(pred 3) f x ≡ f (f x),也就是要让f的作用少一次.
+
+现在再来重新看下丘奇数的定义，因为丘奇数被定义为一个函数，所以当我们选定f和x之后
+
+0 f x ≡  x
+1 f x ≡ (f x)
+2 f x ≡ (f (f x))
+3 f x ≡ (f (f (f x)))
+...
+
+如果可以选择合适的z和s,使得(s z) ≡ x,(s (s z)) ≡ (f x)然后用z和s替换上面的f 和 x将得到:
+
+1 s z ≡ (s z) ≡ x ≡ 0 f x
+2 s z ≡ (s (s z)) ≡ (f x) ≡ 1 f x
+3 s z ≡ (s (s (s z))) ≡ (f (f x)) ≡ 2 f x
+
+也就是说n s z ≡ n - 1
+
+通过选择s ≡ (λgh.h (g f)),z ≡ (λu.x)
+
+0 s z ≡ (λgh.h (g f)) (λu.x) ≡ λh.h (λu.x f) ≡ λh.h x
+1 s z ≡ (λgh.h (g f)) ((λgh.h (g f)) (λu.x)) ≡ λh.h (f x)
+2 s z ≡ (λgh.h (g f)) ((λgh.h (g f)) ((λgh.h (g f)) (λu.x))) ≡ λh.h (f (f x))
+
+好了，到这里只要将前面的λh.h去掉就好了,而这只要将上面的结果再应用到λu.u上就可以了.
+(λh.h x) λu.u ≡ x
+(λh.h (f x)) λu.u ≡ (f x)
+(λh.h (f (f x))) λu.u ≡ (f (f x))
+
+
+由此，就得到了pred的定义:
+	pred ≡ λnfx.((n (λgh. h (g f)) (λu. x)) (λu. u))
+	
+	
