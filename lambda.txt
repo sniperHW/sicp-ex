@@ -1,17 +1,17 @@
-Lambda项的语法定义:
-
-Lambda项的定义是递归的:
+lambda表达式可以通过下述以BNF范式表达的上下文无关文法描述：
 
 1.	<表达式> ::= <标识符>
 2.	<表达式> ::=(λ<标识符> .<表达式>)
 3.	<表达式> ::=(<表达式> <表达式>)
 
+用文字描述就是:
 1)	一个变量是lambda项
 2)	如果s和z都是lambda项,那么(s z)是lambda项,这被称为将s应用到z.
 3)	如果s是lambda项,那么lambda抽象λx.s是一个lambda项.
 
 Lambda抽象是右结合的, λx1.x2…xn.s 等同于λx1.( λx2. … (λxn.s))
 应用是左结合的s1 s2 s3 … sn 等同于 (((s1 s2) s3) … sn)
+应用的优先级高于抽象,所以λx1.x2 x3 等同于λx1.(x2 x3)
 
 变量
 
@@ -38,26 +38,21 @@ s[t/x]表示用t替换掉项s中x的所有自由出现.(注意s中x的自由出现在λx.s是绑定的)
 如果f 对于任意lambda项目都有s(f s) ≡f s，f称为不动点组合子.
 也就是说fs 是 s的不动点.
 
-先看第一个不动点算子Θ:AA
+下面分析一下不动点组合子所共有的模式:
+
+先看第一个不动点组合子Θ:AA
 
 其中A ≡λxy.y(xxy)
 
-A作用在A上会产生这样一个项λf.f(AAf) 
+	λxy.y(xxy) λxy.y(xxy)
+≡   λxz.z(xxz) λxy.y(xxy)	
+≡   λz.z (λxy.y(xxy) λxy.y(xxy) z)
 
-(λf.f(AAf))s ≡s(AAs)
+再看一下Y组合子 Y ≡λf.((λx.f(xx))(λx.f(xx)))
+	λf.((λx.f(xx))(λx.f(xx)))
+≡	λf.(f ((λx.f(xx) λx.f(xx))))
+≡   λf.(f ((λu.(λx.u(xx) λx.u(xx))) f))
 
-再看一下Y算子 Y ≡λf.( λx.f(xx))( λx.f(xx))
-对右边规约得到 f(λx.f(xx) λx.f(xx))
-f(λx.f(xx) λx.f(xx))等价与f( (λu.( λx.u(xx) λx.u(xx)) f))
-
-所以Y等价于
-λf.f( (λu.( λx.u(xx) λx.u(xx)) f))
-其中λu.( λx.u(xx) λx.u(xx)就是Y算子本身
-即λf.f(Yf)
-
-可见不动点算子都可规约成如下形式: λf.f(X f)  其中X是算子本身
-
-构造一个s使得对于任何的st有ss
 
 对布尔类型的编码
 
