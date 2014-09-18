@@ -1,64 +1,77 @@
-(begin
-	(load "ex2.scm")
-	(define (make-maze)
-	(define (for-each proc things)
-		(cond ((null? things) nil)
-			  (else	
-				(let ((ret (proc (car things))))
-					(if (null? ret) (for-each proc (cdr things)) ret)))))
-	;ÃÔ¹¬
-	(define maze  '((1 1 1 1 1 1 1 1 1)
-					(1 0 1 0 0 0 1 0 1)
-					(1 0 1 0 1 0 1 0 1)
-					(1 0 1 0 1 0 1 0 1)
-					(1 0 0 0 0 0 0 0 1)
-					(1 1 1 1 1 1 1 1 1)))
-	(define direction '((0 -1)(0 1)(-1 0)(1 0))) ;ÉÏÏÂ×óÓÒ
-	(define (get-x-y array-2d x y)
-		(list-ref (list-ref array-2d x) y))
-	(define (is-close cur path);ÊÇ·ñÒÑ¾­×ß¹ýµÄÂ·	
-		(= 1 (accumulate 
-				(lambda (pos sum) 
-				(if (and (= (car pos) (car cur)) (= (cadr pos) (cadr cur))) (+ sum 1) sum)) 
-			 0 path)))
-	;¼ì²éÊÇ·ñºÏ·¨Â·¾¶
-	(define (check cur dir path)
-		(let ((x (+ (car dir) (car cur)))
-			  (y (+ (cadr dir) (cadr cur))))
-		 (cond ((is-close (list x y) path) nil)
-			   ((= (get-x-y maze x y) 1) nil);×èµ²
-			   (else (list x y)))))   ;·µ»ØÏÂÒ»²½ºÏ·¨µÄ×ø±ê	
-				
-	;·µ»ØÒ»ÌõÂ·¾¶
-	(define (find-path-one start target)
-		(define (iter cur-step path)
-			(define (move dir)
-				(let ((next (check cur-step (list-ref direction dir) path)))
-					(cond ((null? next) nil)
-						  (else (iter next (cons cur-step path))))))						  
-			(if (and (= (car target) (car cur-step))
-			         (= (cadr target) (cadr cur-step))) (cons cur-step path)
-				(for-each move (enumerate-interval 0 3)))	 
-		)
-		(reverse (iter start nil))
-	)
-	;·µ»ØËùÓÐÂ·¾¶
-	(define (find-path-all start target)	
-		(define (iter cur-step path)
-			(define (move dir)
-				(let ((next (check cur-step (list-ref direction dir) path)))
-					(cond ((null? next) nil)
-						  (else (iter next (cons cur-step path))))))						  
-			(cond ((and (= (car target) (car cur-step)) (= (cadr target) (cadr cur-step))) 
-				(list (cons cur-step path))) ;µ½´ïÄ¿µÄµØ£¬·µ»ØÂ·¾¢
-				  (else
-					  (accumulate (lambda (dir p) (append (move dir) p)) nil (enumerate-interval 0 3))))
-		)
-		(map reverse (iter start nil))
-	)
-	(lambda (op start target)
-		(cond ((eq? op 'find-path-all) (find-path-all start target))
-			  ((eq? op 'find-path-one) (find-path-one start target))
-			  (else "bad op"))
-	))	
-)	
+(define maze1  '((1 1 1 1 1 1 1 1 1)
+				(1 0 1 0 0 0 0 0 1)
+				(1 0 1 0 1 0 1 0 1)
+				(1 0 1 0 1 0 1 0 1)
+				(1 0 0 0 0 0 1 0 1)
+				(1 1 1 1 1 1 1 1 1)))
+
+;è¾“å…¥ä¸€ä¸ª(width X hight)çš„çŸ©é˜µ,(f x y)æ˜¯ä¸€ä¸ªå‡½æ•°,ç”¨äºŽæŽ§åˆ¶x yåæ ‡è¾“å‡ºå€¼
+(define (gen-matrix width hight f)
+	(define (gen-row x y row matrix)
+		(if (>= x width) (cons (reverse row) matrix)
+			(gen-row (+ x 1) y (cons (f x y) row) matrix)))
+	(define (gen y matrix)
+		(if (>= y hight) matrix
+			(gen (+ y 1) (gen-row 0 y '() matrix))))
+	(reverse (gen 0 '())))
+	
+(define (show-matrix matrix)
+	(define (show-row row)
+		(if (not (null? row)) (begin (display (car row))(display "\n")(show-row (cdr row)))))
+	(show-row matrix))
+	
+(define (get-matrix-size matrix)
+	(if (null? matrix) '()
+		(if (null? (car matrix)) '()
+			(list (length (car matrix)) (length matrix)))))
+
+(define (member? xs x)
+	(cond
+		[(null? xs) #f]
+		[else (if (equal? x (car xs)) #t (member? (cdr xs) x))]))	
+
+;è¿”å›žä¸€æ¡è·¯å¾„				
+(define (findpath-one maze from to)
+	(letrec* ( [direction '((0 -1) (0 1) (-1 0) (1 0))]			
+			   [arrive? (lambda (cur) (and (= (car cur) (car to)) (= (cadr cur) (cadr to))))]
+			   [moveable?  (lambda (x y)
+							 (cond
+								[(> y (length maze)) #f]
+								[else (let ([line (list-ref maze y)]) 
+									   (if (> x (length line)) #f (= (list-ref line x) 0)))]))]
+			   [foreach-dir (lambda (dirs pos path close)
+							   (cond
+								 [(null? dirs) '()]
+								 [else (let* ([dir (car dirs)]
+											  [dirx (car dir)]
+											  [diry (cadr dir)]     
+											  [nextpos (list (+ (car pos) dirx) (+ (cadr pos) diry))]
+											  [ret (move nextpos path close)])							 
+										(if (not (null? ret)) ret (foreach-dir (cdr dirs) pos path close)))]))]
+			   [move (lambda (pos path close) 
+						(if (arrive? pos) (reverse (cons pos path))
+							(if (or (not (moveable? (car pos) (cadr pos))) (member? close pos)) '()
+								(foreach-dir direction pos (cons pos path) (cons pos close)))))])
+           (cond
+		   		[(arrive? from) (list from)]
+		   		[(or (not (moveable? (car from) (cadr from))) (not (moveable? (car to) (cadr to)))) '()]
+		    	[else (foreach-dir direction from (list from) (list from))])))
+
+;æ˜¾ç¤ºä¸€ä¸ªè¿·å®«,mazeä¸ºè¿·å®«,pathä¸ºè·¯å¾„
+(define (showmaze maze path)
+	(let ([matrix-size (get-matrix-size maze)])
+	(define matrix (gen-matrix (car matrix-size) (cadr matrix-size) (lambda (x y)
+		(if (member? path (list x y)) '*
+			(list-ref (list-ref maze y) x)))))
+	(show-matrix matrix))
+)
+
+;(showmaze maze1 (findpath-one maze1 '(1 1) '(3 3)))
+
+(define (show pos size)
+	(let* ([check-pos (gen-invaild pos size)]
+		   [matrix  (gen-matrix size size (lambda (x y) (if (member? check-pos (list x y)) '* " ")))])
+	       (show-matrix matrix)))									   
+
+
+		    	              
