@@ -321,12 +321,11 @@
 ;((A B C) (A B D) (A B E) ... )	
 
 (define (combination xs n)
-	(cond [(null? xs) '()]
-	      [(< (length xs) n) '()] 
+	(cond [(or (null? xs) (< (length xs) n))'()]
 		  [(= n 1) (foldr (lambda (x acc) (cons (list x) acc)) '() xs)]
 		  [else (append (foldr (lambda (x acc) (cons (cons (car xs) x) acc))
-						   '() (combination (cdr xs) (- n 1)))
-					   (combination (cdr xs) n))]))			   
+						       '() (combination (cdr xs) (- n 1))) 
+				        (combination (cdr xs) n))]))			   
 ;(length (combination '(1 2 3 4 5 6 7 8 9 10 11 12) 3))
  
 		      
