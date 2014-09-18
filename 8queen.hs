@@ -1,7 +1,7 @@
 --判断皇后是否可以合法放置
 vaild :: [(Int,Int)] -> (Int,Int) -> Bool
 vaild [] _ = True
-vaild xs (x,y) = foldr (\q acc -> if (x == (fst q)) || (abs (x - fst q)) == (abs (y - snd q)) then False  else acc) True xs  
+vaild xs (x,y) = foldr (\(x1,y1) acc -> if (x == x1) || (abs $ x - x1) == (abs $ y - y1) then False else acc) True xs  
 
 foreachrow :: (Int,Int) -> Int -> [(Int,Int)] -> [[(Int,Int)]] -> [[(Int,Int)]]
 foreachrow (x,y) size queen result 

@@ -22,16 +22,19 @@
 	(cond
 		[(null? xs) #f]
 		[else (if (equal? x (car xs)) #t (member? (cdr xs) x))]))
+
+;对xs中的每个元素调用f,如果f返回#t则check-element立刻返回#t,否则到达末尾返回#f		
+(define (check-element xs f)
+    (call/cc (lambda (break)
+        (for-each (lambda (x) (if (f x) (break #t))) xs) 
+        #f)))			
 		
 (define (puzzle size)   
     (define (vaild? queen pos);判断当前位置是否可以放置皇后
-        (define (check xs)
-            (if (null? xs) #t
-                (let ([x (car (car xs))]
-                      [y (cadr (car xs))])
-                 (cond [(or (= x (car pos)) (= (abs (- x (car pos))) (abs (- y (cadr pos))))) #f]
-                       [else (check (cdr xs))]))))
-        (check queen))
+        (not (check-element queen (lambda (q) 
+								   (let ([x (car q)]
+										 [y (cadr q)])
+								    (or (= x (car pos)) (= (abs (- x (car pos))) (abs (- y (cadr pos))))))))))	   
     (define (foreach-row x y queen result)
         (cond 
               [(>= x size) result]
