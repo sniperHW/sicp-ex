@@ -320,25 +320,13 @@
 ;* (combination 3 '(a b c d e f))
 ;((A B C) (A B D) (A B E) ... )	
 
-;组合			   		
-(define (combination xs n)	
-	(define (iter xs n)
-		(cond [(null? xs) '()]
-			  [(= n 1) xs]
-			  [else (foldr (lambda (x acc) (cons (cons (car xs) (if (pair? x) x (list x))) acc)) '() (iter (cdr xs) (- n 1)))])) 	
-	(define (iter2 xs result num)
-		(if (< num 0) result
-			(iter2 (cdr xs) (append (iter xs n) result) (- num 1))))
-	(iter2 xs '() (- (length xs) n)))			   
-
-
-;排列 	   
-(define (arrange xs n)
-	(define (gen-swap xs)
-		(let ([r (range 2 (length xs))])
-			 (foldr (lambda (x acc) (cons (swap xs 1 x) acc)) '() r)))	
+(define (combination xs n)
 	(cond [(null? xs) '()]
-		  [(= n 1) xs]		  
-		  [else ;(let ([other (foldr (lambda (x acc) (cons (arrange x (- n 1)) acc)) '() (gen-swap xs))])
-		  			 (foldr (lambda (x acc) (cons (cons (car xs) (if (pair? x) x (list x))) acc)) '() (arrange (cdr xs) (- n 1)))]));));]))	  
+	      [(< (length xs) n) '()] 
+		  [(= n 1) (foldr (lambda (x acc) (cons (list x) acc)) '() xs)]
+		  [else (append (foldr (lambda (x acc) (cons (cons (car xs) x) acc))
+						   '() (combination (cdr xs) (- n 1)))
+					   (combination (cdr xs) n))]))			   
+;(length (combination '(1 2 3 4 5 6 7 8 9 10 11 12) 3))
+ 
 		      
