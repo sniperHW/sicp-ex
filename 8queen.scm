@@ -29,8 +29,7 @@
             (if (null? xs) #t
                 (let ([x (car (car xs))]
                       [y (cadr (car xs))])
-                 (cond [(= x (car pos)) #f]
-                       [(= (abs (- x (car pos))) (abs (- y (cadr pos)))) #f]
+                 (cond [(or (= x (car pos)) (= (abs (- x (car pos))) (abs (- y (cadr pos))))) #f]
                        [else (check (cdr xs))]))))
         (check queen))
     (define (foreach-row x y queen result)
