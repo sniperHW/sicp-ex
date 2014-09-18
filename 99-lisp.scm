@@ -28,6 +28,17 @@
 	      [(not (= (length xs) 2)) '()]
 	      [else (list (f (car (cdr xs))) (f (car xs)))]))
 
+;交换列表中的两个元素	      
+(define (swap xs n1 n2)
+	(let ([a (element-at xs n1)]
+		  [b (element-at xs n2)])
+		  (reverse (car (cdr (foldl (lambda (acc x)
+			(let ([fst (car acc)]
+				  [snd (car (cdr acc))])			 
+				 (cond [(= fst n1) (list (+ fst 1) (cons b snd))]
+					   [(= fst n2) (list (+ fst 1) (cons a snd))]
+					   [else (list (+ fst 1) (cons x snd))]))) '(1 ()) xs))))))		      
+
 ;P03 (*) Find the K'th element of a list.
 ;The first element in the list is number 1.
 ;Example:
@@ -39,7 +50,7 @@
 		(cond [(null? xs) "idx out of range"]
 			  [(= acc at) (car xs)]
 			  [else (iter (cdr xs) (+ acc 1))]))
-	(iter xs 0))
+	(iter xs 1))
 			
 		
 ;P04 (*) Find the number of elements of a list.
@@ -216,4 +227,118 @@
 				  [snd (car (cdr acc))])
 			 (if (and (>= fst n1) (<= fst n2)) (list (+ fst 1) (cons x snd))
 				(list (+ fst 1) snd)))) '(1 ()) xs)))))
-					  
+
+;P19 (**) Rotate a list N places to the left.
+;Examples:
+;* (rotate '(a b c d e f g h) 3)
+;(D E F G H A B C)
+
+;* (rotate '(a b c d e f g h) -2)
+;(G H A B C D E F)
+
+;Hint: Use the predefined functions length and append, as well as the result of problem P17.					  
+
+(define (rotate xs n)
+	(let ([s (if (> n 0) n (+ (length xs) n))])
+		(my-flatten (swapf (split xs s) (lambda (x) x)))))
+		
+;P20 (*) Remove the K'th element from a list.
+;Example:
+;* (remove-at '(a b c d) 2)
+;(A C D)
+
+(define (remove-at xs n)
+	(reverse (car (cdr (foldl (lambda (acc x)
+		    (let ([fst (car acc)]
+				  [snd (car (cdr acc))])
+			 (if (= fst n) (list (+ fst 1) snd)
+				 (list (+ fst 1) (cons x snd))))) '(1 ()) xs)))))
+				 
+;P21 (*) Insert an element at a given position into a list.
+;Example:
+;* (insert-at 'alfa '(a b c d) 2)
+;(A ALFA B C D)
+
+(define (insert-at e xs n)
+	(reverse (car (cdr (foldl (lambda (acc x)
+		    (let ([fst (car acc)]
+				  [snd (car (cdr acc))])
+			 (if (= fst n) (list (+ fst 1) (cons x (cons e snd)))
+				 (list (+ fst 1) (cons x snd))))) '(1 ()) xs)))))
+
+;P22 (*) Create a list containing all integers within a given range.
+;If first argument is smaller than second, produce a list in decreasing order.
+;Example:
+;* (range 4 9)
+;(4 5 6 7 8 9)
+
+(define (range b e)
+	(define (iter acc result)
+		(if (< acc b) result
+			(iter (- acc 1) (cons acc result))))
+	(iter e '())) 
+
+;P23 (**) Extract a given number of randomly selected elements from a list.
+;The selected items shall be returned in a list.
+;Example:
+;* (rnd-select '(a b c d e f g h) 3)
+;(E D A)
+
+(define (rnd-select xs n)
+	(define (iter acc result num)
+		(if (or (null? num) (>= 0 acc)) result
+			(let ([i (+ (random (length num)) 1)])
+				 (iter (- acc 1) (cons (element-at num i) result) (remove-at num i)))))
+	(iter n '() xs))
+	
+	
+;P24 (*) Lotto: Draw N different random numbers from the set 1..M.
+;The selected numbers shall be returned in a list.
+;Example:
+;* (lotto-select 6 49)
+;(23 1 17 33 21 37)	
+
+(define (lotto-select n num)
+	(rnd-select (range 1 num) n))
+			   		
+;P25 (*) Generate a random permutation of the elements of a list.
+;Example:
+;* (rnd-permu '(a b c d e f))
+;(B A D C E F)
+
+;Hint: Use the solution of problem P23.
+(define (rnd-permu xs)
+	(rnd-select xs (length xs)))
+	
+	
+;P26 (**) Generate the combinations of K distinct objects chosen from the N elements of a list
+;In how many ways can a committee of 3 be chosen from a group of 12 people? We all know that there
+; are C(12,3) = 220 possibilities (C(N,K) denotes the well-known binomial coefficients). For pure 
+;mathematicians, this result may be great. But we want to really generate all the possibilities in a list.
+
+;Example:
+;* (combination 3 '(a b c d e f))
+;((A B C) (A B D) (A B E) ... )	
+
+;组合			   		
+(define (combination xs n)	
+	(define (iter xs n)
+		(cond [(null? xs) '()]
+			  [(= n 1) xs]
+			  [else (foldr (lambda (x acc) (cons (cons (car xs) (if (pair? x) x (list x))) acc)) '() (iter (cdr xs) (- n 1)))])) 	
+	(define (iter2 xs result num)
+		(if (< num 0) result
+			(iter2 (cdr xs) (append (iter xs n) result) (- num 1))))
+	(iter2 xs '() (- (length xs) n)))			   
+
+
+;排列 	   
+(define (arrange xs n)
+	(define (gen-swap xs)
+		(let ([r (range 2 (length xs))])
+			 (foldr (lambda (x acc) (cons (swap xs 1 x) acc)) '() r)))	
+	(cond [(null? xs) '()]
+		  [(= n 1) xs]		  
+		  [else ;(let ([other (foldr (lambda (x acc) (cons (arrange x (- n 1)) acc)) '() (gen-swap xs))])
+		  			 (foldr (lambda (x acc) (cons (cons (car xs) (if (pair? x) x (list x))) acc)) '() (arrange (cdr xs) (- n 1)))]));));]))	  
+		      
