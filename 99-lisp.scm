@@ -414,6 +414,7 @@
 ;both lengths appear just once. The third and forth list have length 3 which appears twice 
 ;(there are two list of this length). And finally, the last three lists have length 2. This is the most frequent length.
 
+;quick sort
 (define (qsort l greater)
 	(define (my-filter f l)
 		(define cps
@@ -429,8 +430,18 @@
 			   [less (my-filter (lambda (x) (if (not (greater x m)) #t #f)) (cdr l))])
 		(append (qsort less greater) (cons m (qsort large greater))))))            
 
-(define (lsort xs) (qsort xs (lambda (l r) (> (length l) (length r)))))	
+;a)
+(define (lsort xs) (qsort xs (lambda (l r) (> (length l) (length r)))))
 
+;b)	
+(define (lfsort xs)
+	(define (statistics xs)
+		(foldr (lambda (x acc) (cons (length x) acc)) '() xs))
+	(define (get-frequent ftable l)
+		(if (= (cadar ftable) (length l)) (caar ftable)
+			(get-frequent (cdr ftable) l)))
+	(let ([ftable (encode (qsort (statistics xs) (lambda (l r) (> l r))))])
+		(qsort xs (lambda (l r)  (> (get-frequent ftable l) (get-frequent ftable r))))))
             
             
             
