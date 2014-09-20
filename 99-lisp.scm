@@ -447,44 +447,4 @@
 		(if (= (cadar ftable) (length l)) (caar ftable)
 			(get-frequent (cdr ftable) l)))
 	(let ([ftable (encode (qsort (statistics xs) (lambda (l r) (> l r))))])
-		(qsort xs (lambda (l r)  (> (get-frequent ftable l) (get-frequent ftable r))))))
-            
-
-;1维,2维数组            
-;数组起始下标为0            
-(define (make-array n init) (rep init n))
-(define (array-at array n) (element-at array (+ n 1)))
-(define (array-replace-at array n new) (replace array new (+ n 1)))
-
-(define (make-array2d width hight init) (make-array hight (make-array width init))) 
-
-(define (array2d-at array2d c r)
-	(let ([row (if (> (length array2d) r) (array-at array2d r) '())])
-		 (if (null? row) "idx out of range"
-			 (if (> c (length row)) "idx out of range"
-				(array-at row c)))))
-								
-(define (array2d-replace-at array2d c r new)
-	(let ([row (if (> (length array2d) r) (array-at array2d r) '())])
-		 (if (null? row) "idx out of range"
-			 (if (> c (length row)) "idx out of range"
-				(array-replace-at array2d r (array-replace-at row c new))))))		
-									   	
-(define (snake size)
-	(define maxc (* size size))
-	(define (snake-imp c matrix cur direction)
-		(if (> c maxc) matrix
-			(let* ([curx (car cur)]
-				   [cury (cadr cur)]
-				   [nextx (+ curx (caar direction))]
-				   [nexty (+ cury (cadar direction))]
-                   [newmatrix (array2d-replace-at matrix curx cury c)]
-                   [newdirection (if (or
-				   				 	 (> 0 nextx)
-                                     (>= nextx size)
-                                     (> 0 nexty)
-                                     (>= nexty size)
-                                     (not (= 0 (array2d-at newmatrix nextx nexty)))) (lshift direction 1);调整移动方向
-                                     direction)])            
-            (snake-imp (+ c 1) newmatrix (list nextx nexty) newdirection))))
-     (snake-imp 1 (make-array2d size size 0)  '(0 0) '((1 0) (0 1) (-1 0) (0 -1))))                                            
+		(qsort xs (lambda (l r)  (> (get-frequent ftable l) (get-frequent ftable r))))))                                           
