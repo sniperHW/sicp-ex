@@ -45,6 +45,14 @@
 					  [snd (car (cdr acc))])
 				 (if (= fst n) (list (+ fst 1) (cons x snd))
 					 (list (+ fst 1) (cons xx snd))))) '(1 ()) xs)))))
+;循环左移动n个元素					 
+(define (lshift xs n) (if (> n 0) (lshift (append (cdr xs) (list (car xs))) (- n 1)) xs))
+		
+
+;循环右移动n个元素
+(define (rshift xs n) (if (> n 0) (rshift (lshift xs (- (length xs) 1)) (- n 1)) xs))
+	
+
 	
 ;P03 (*) Find the K'th element of a list.
 ;The first element in the list is number 1.
@@ -57,7 +65,8 @@
 		(cond [(null? xs) "idx out of range"]
 			  [(= acc at) (car xs)]
 			  [else (iter (cdr xs) (+ acc 1))]))
-	(iter xs 1))
+	(if (or (0 > at) (> at (length xs))) "idx out of range" 		  
+	(iter xs 1)))
 			
 		
 ;P04 (*) Find the number of elements of a list.
@@ -440,6 +449,25 @@
 	(let ([ftable (encode (qsort (statistics xs) (lambda (l r) (> l r))))])
 		(qsort xs (lambda (l r)  (> (get-frequent ftable l) (get-frequent ftable r))))))
             
-            
-            
-            		
+
+;1维,2维数组            
+;数组起始下标为0            
+(define (make-array n init) (rep init n))
+(define (array-at array n) (element-at array (+ n 1)))
+(define (array-replace-at array n new) (replace array new (+ n 1)))
+
+(define (make-array2d width hight init) (make-array hight (make-array width init))) 
+
+(define (array2d-at array2d c r)
+	(let ([row (if (> (length array2d) r) (array-at array2d r) '())])
+		 (if (null? row) "idx out of range"
+			 (if (> c (length row)) "idx out of range"
+				(array-at row c)))))
+								
+(define (array2d-replace-at array2d c r new)
+	(let ([row (if (> (length array2d) r) (array-at array2d r) '())])
+		 (if (null? row) "idx out of range"
+			 (if (> c (length row)) "idx out of range"
+				(array-replace-at array2d r (array-replace-at row c new))))))		
+									   	
+               		
