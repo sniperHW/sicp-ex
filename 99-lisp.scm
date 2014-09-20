@@ -65,7 +65,7 @@
 		(cond [(null? xs) "idx out of range"]
 			  [(= acc at) (car xs)]
 			  [else (iter (cdr xs) (+ acc 1))]))
-	(if (or (0 > at) (> at (length xs))) "idx out of range" 		  
+	(if (or (> 0 at) (> at (length xs))) "idx out of range" 		  
 	(iter xs 1)))
 			
 		
@@ -470,4 +470,21 @@
 			 (if (> c (length row)) "idx out of range"
 				(array-replace-at array2d r (array-replace-at row c new))))))		
 									   	
-               		
+(define (snake size)
+	(define maxc (* size size))
+	(define (snake-imp c matrix cur direction)
+		(if (> c maxc) matrix
+			(let* ([curx (car cur)]
+				   [cury (cadr cur)]
+				   [nextx (+ curx (caar direction))]
+				   [nexty (+ cury (cadar direction))]
+                   [newmatrix (array2d-replace-at matrix curx cury c)]
+                   [newdirection (if (or
+				   				 	 (> 0 nextx)
+                                     (>= nextx size)
+                                     (> 0 nexty)
+                                     (>= nexty size)
+                                     (not (= 0 (array2d-at newmatrix nextx nexty)))) (lshift direction 1);调整移动方向
+                                     direction)])            
+            (snake-imp (+ c 1) newmatrix (list nextx nexty) newdirection))))
+     (snake-imp 1 (make-array2d size size 0)  '(0 0) '((1 0) (0 1) (-1 0) (0 -1))))                                            
