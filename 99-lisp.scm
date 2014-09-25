@@ -51,8 +51,10 @@
 
 ;循环右移动n个元素
 (define (rshift xs n) (if (> n 0) (rshift (lshift xs (- (length xs) 1)) (- n 1)) xs))
-	
 
+(define (n! n) (if (>= 1 n) 1 (* n (n! (- n 1)))))
+	
+(define (C n m) (/ (n! n) (* (n! (- n m)) (n! m))))
 	
 ;P03 (*) Find the K'th element of a list.
 ;The first element in the list is number 1.
@@ -345,6 +347,9 @@
 				        (combination (cdr xs) n))]));从(cdr xs)中取n个			   
 ;(length (combination '(1 2 3 4 5 6 7 8 9 10 11 12) 3))
 
+(define (combination-num num n)
+	(length (combination (range 1 num) n)))
+
 ;排列
 (define (permutation xs n)
 	(cond [(or (null? xs) (< (length xs) n))'()]
@@ -447,4 +452,263 @@
 		(if (= (cadar ftable) (length l)) (caar ftable)
 			(get-frequent (cdr ftable) l)))
 	(let ([ftable (encode (qsort (statistics xs) (lambda (l r) (> l r))))])
-		(qsort xs (lambda (l r)  (> (get-frequent ftable l) (get-frequent ftable r))))))                                           
+		(qsort xs (lambda (l r)  (> (get-frequent ftable l) (get-frequent ftable r)))))) 
+		
+;P54A (*) Check whether a given term represents a binary tree
+;Write a predicate istree which returns true if and only if its argument is a list representing a binary tree.
+;Example:
+;* (istree (a (b nil nil) nil))
+;T
+;* (istree (a (b nil nil)))
+;NIL
+
+(define (istree tree)
+	(if (or (eq? 'nil tree) (null? tree)) #t ;empty is a tree
+		(if (not (= (length tree) 3)) #f;
+			(let ([root (not (pair? (car tree)))]
+				  [left (istree (cadr tree))]
+				  [right (istree (caddr tree))])
+			 (and root left right)))))
+			 
+;P55 (**) Construct completely balanced binary trees
+;In a completely balanced binary tree, the following property holds for every node: 
+;The number of nodes in its left subtree and the number of nodes in its right subtree are almost equal, 
+;which means their difference is not greater than one.
+
+;Write a function cbal-tree to construct completely balanced binary trees for a given number of nodes. 
+;The predicate should generate all solutions via backtracking. Put the letter 'x' as information into all 
+;nodes of the tree.
+;Example:
+;* cbal-tree(4,T).
+;T = t(x, t(x, nil, nil), t(x, nil, t(x, nil, nil))) ;
+;T = t(x, t(x, nil, nil), t(x, t(x, nil, nil), nil)) ;
+;etc......No			 	  
+;左右子树节点数量相差不超过1
+
+(define (cbal-tree n)
+	(define (iter n result)
+		(if (<= n 0) '(nil)
+			(let* ([n1 (floor (/ (- n 1) 2))] 
+				   [n2 (- (- n 1) n1)]
+				   [sub1 (iter n1 result)]
+				   [sub2 (iter n2 result)]
+				   [r (if (not (equal? sub1 sub2))
+						  (foldr (lambda (x1 acc1) 
+									(append (foldr (lambda (x2 acc2)
+										(cons (list 'x x1 x2) acc2)) '() sub2) acc1))
+				                 '() sub1) '() )])            
+					(append r (append (foldr (lambda (x1 acc1) 
+										(append (foldr (lambda (x2 acc2)
+											(cons (list 'x x2 x1) acc2)) '() sub2) acc1))
+				   '() sub1) result)))))
+	(iter n '()))	                                      
+
+;P56 (**) Symmetric binary trees
+;Let us call a binary tree symmetric if you can draw a vertical line through the root 
+;node and then the right subtree is the mirror image of the left subtree. Write a predicate 
+;symmetric/1 to check whether a given binary tree is symmetric. Hint: Write a predicate mirror/2 
+;first to check whether one tree is the mirror image of another. We are only interested in the 
+;structure, not in the contents of the nodes.
+
+
+(define (sametree? tree1 tree2)
+	(cond [(or (and (pair? tree1) (not (pair? tree2)))
+		       (and (pair? tree2) (not (pair? tree1)))) #f]
+		  [(and (eq? 'nil tree1) (eq? 'nil tree2)) #t]     
+		  [else (and (sametree? (cadr tree1) (cadr tree2)) (sametree? (caddr tree1) (caddr tree2)))]))
+		  
+(define (mirror? tree1 tree2);tree1的左子树结构==tree2的右子树且tree1的右子树结构==tree2的左子树则两树是镜像
+	(and (sametree? (cadr tree1) (caddr tree2)) (sametree? (caddr tree1) (cadr tree2))))			
+		  
+(define (symmetric tree) (mirror? (cadr tree) (caddr tree)))
+
+
+;P57 (**) Binary search trees (dictionaries)
+;Use the predicate add/3, developed in chapter 4 of the course, 
+;to write a predicate to construct a binary search tree from a list of integer numbers.
+;Example:
+;* construct([3,2,5,7,1],T).
+;T = t(3, t(2, t(1, nil, nil), nil), t(5, nil, t(7, nil, nil)))
+
+;Then use this predicate to test the solution of the problem P56.
+;Example:
+;* test-symmetric([5,3,18,1,4,12,21]).
+;Yes
+;* test-symmetric([3,2,5,7,1]).
+;No
+
+(define (construct xs)
+	(define (add x tree)
+		(if (or (null? tree) (eq? 'nil tree)) (list x 'nil 'nil)
+			(if (> x (car tree)) (list (car tree) (cadr tree) (add x (caddr tree)))
+				(list (car tree) (add x (cadr tree)) (caddr tree)))))	
+	(define (iter xs tree)
+		(if (null? xs) tree
+			(iter (cdr xs) (add (car xs) tree))))
+	(iter xs '()))
+			
+;P58 (**) Generate-and-test paradigm
+;Apply the generate-and-test paradigm to construct all symmetric, 
+;completely balanced binary trees with a given number of nodes. Example:
+;* sym-cbal-trees(5,Ts).
+;Ts = [t(x, t(x, nil, t(x, nil, nil)), t(x, t(x, nil, nil), nil)), t(x, t(x, t(x, nil, nil), nil), t(x, nil, t(x, nil, nil)))] 
+
+;How many such trees are there with 57 nodes? Investigate about how many solutions there are for a given number of nodes? 
+;What if the number is even? Write an appropriate predicate.
+
+(define (sym-cbal-trees n)
+	(let ([trees (cbal-tree n)])
+		 (foldr (lambda (x acc) (if (symmetric x) (cons x acc) acc))
+				'() trees)))
+
+
+;P59 (**) Construct height-balanced binary trees
+;In a height-balanced binary tree, the following property holds for every node: 
+;The height of its left subtree and the height of its right subtree are almost equal,
+; which means their difference is not greater than one.
+
+;Write a predicate hbal-tree/2 to construct height-balanced binary trees for a given height.
+;The predicate should generate all solutions via backtracking. Put the letter 'x' as information 
+;into all nodes of the tree.
+;Example:
+;* hbal-tree(3,T).
+;T = t(x, t(x, t(x, nil, nil), t(x, nil, nil)), t(x, t(x, nil, nil), t(x, nil, nil))) ;
+;T = t(x, t(x, t(x, nil, nil), t(x, nil, nil)), t(x, t(x, nil, nil), nil)) ;
+;etc......No
+;左右子树高度相差不超过1
+
+
+(define (hbal-tree h)
+	;高度为2的高度平衡树只有
+	;   x          x          x
+	; x  nil    nil  x     x     x
+ 	;三种  
+	(cond [(= 1 h) (list '(x nil nil))]
+		  [(= 2 h) (list '(x (x nil nil) nil) '(x nil (x nil nil)) '(x (x nil nil) (x nil nil)))] 
+		  [else (let* ([sub1 (hbal-tree (- h 1))] ;所有高度为h-1的子树
+		               [sub2 (hbal-tree (- h 2))] ;所有高度为h-2的子树		  			   
+		  			   [t1 (foldr (lambda (x1 acc1) 
+		  			   		(append (foldr (lambda (x2 acc2)
+		  			   			 (cons (list 'x x2 x1) acc2)) '() sub1) acc1)) '() sub2)]
+		  			   [t2 (foldr (lambda (x1 acc1) 
+		  					(append (foldr (lambda (x2 acc2)
+		  							(cons (list 'x x1 x2) acc2)) '() sub1) acc1)) '() sub2)]
+		  			   [t3 (foldr (lambda (x1 acc1) 
+		  					(append (foldr (lambda (x2 acc2)
+		  						 (cons (list 'x x2 x1) acc2)) '() sub1) acc1)) '() sub1)])		  							
+		  			   (append t1 t2 t3))])) 
+		  			  		  			    
+;构造内节点数量为N的所有高度平衡树
+;P60 (**) Construct height-balanced binary trees with a given number of nodes
+;Consider a height-balanced binary tree of height H. What is the maximum number of nodes it can contain?
+;Clearly, MaxN = 2**H - 1. However, what is the minimum number MinN? This question is more difficult. 
+;Try to find a recursive statement and turn it into a predicate minNodes/2 defined as follwos:
+
+;% minNodes(H,N) :- N is the minimum number of nodes in a height-balanced binary tree of height H.
+;(integer,integer), (+,?)
+
+;On the other hand, we might ask: what is the maximum height H a height-balanced binary tree with N nodes can have?
+
+;% maxHeight(N,H) :- H is the maximum height of a height-balanced binary tree with N nodes
+;(integer,integer), (+,?)
+
+;Now, we can attack the main problem: construct all the height-balanced binary trees with a given nuber of nodes.
+
+;% hbal-tree-nodes(N,T) :- T is a height-balanced binary tree with N nodes.
+
+;Find out how many height-balanced trees exist for N = 15.
+
+(define (exponent x n) 
+	    (cond [(= 0 n) 1]
+			  [(= 1 n) x]
+			  [else (* x (exponent x (- n 1)))]))
+			  
+(define (maxNodes h) (- (exponent 2 h) 1))
+
+;高度为h的具有最少内节点数量的高度平衡树其两棵子树必定一棵是高度为h-1
+;具有最少内节点数量的高度平衡树,一棵是高度为h-2具有最少内节点数量的高度平衡树
+
+;高度为0,最少内节点数量为0,高度为1,最小内节点数量为1,高度为2最少內节点数量为2
+;minNodes(h) = 1 ,h == 1
+;minNodes(h) = 2 ,h == 2
+;minNodes(h) = minNodes( h - 1 ) + minNodes(h - 2) + 根节点,h == 3
+;			 = minNodes(2) + minNodes(1) + 1 = 4 
+(define (minNodes h)
+	(cond [(= 0 h) 0]
+		  [(= 1 h) 1]
+		  [(= 2 h) 2]
+		  [else (+ 1 (+ (minNodes (- h 1)) (minNodes (- h 2))))]))
+
+	
+;maxHeight N个节点的高度平衡树的最大高度
+;解法1)从h=1开始调用minNodes,如果N >= minNodes(h) and minNodes(h+1) > N ,则h就是最大高度
+(define (maxHeight n)
+	(define (iter h)
+		(if (and (>= n (minNodes h)) (> (minNodes (+ h 1)) n)) h
+			(iter (+ h 1))))
+	(if (= n 0) 0
+		(iter 1)))
+		
+		
+(define (minHeight n) (ceiling (log (+ n 1) 2)))
+
+
+(define (countNode tree) 
+	(if (eq? 'nil tree) 0
+		(+ 1 (+ (countNode (cadr tree)) (countNode (caddr tree))))))
+	
+
+;hbal-tree-nodes
+;解法1)通过maxHeight获得树的最大高度H,通过minHeight获得最小高度h
+;通过hbal-tree构造h~H之间的所有高度平衡树,过滤掉节点数量不为n的
+
+(define (hbal-tree-nodes n)
+	(let* ([maxh (maxHeight n)]
+		   [minh (minHeight n)]
+		   [rangeh (range minh maxh)]
+		   [all (foldl (lambda (acc x)
+				 (append (hbal-tree x) acc)) '() rangeh)])	   	
+		   (foldl (lambda (acc x)
+		   			(if (= (countNode x) n) (cons x acc) acc))
+		   		  '() all))) 
+		   		  
+		   		  
+;P61 (*) Count the leaves of a binary tree
+;A leaf is a node with no successors. Write a predicate count-leaves/2 to count them. 
+
+;% count-leaves(T,N) :- the binary tree T has N leaves
+
+(define (count-leaves tree)
+	(if (eq? tree 'nil) 0
+		(let ([rcount (count-leaves (cadr tree))]
+		      [lcount (count-leaves (caddr tree))])
+		 (if (and (= 0 rcount) (= 0 lcount)) 1
+			 (+ rcount lcount)))))
+			 
+			 
+;P61A (*) Collect the leaves of a binary tree in a list
+;A leaf is a node with no successors. Write a predicate leaves/2 to collect them in a list. 
+;% leaves(T,S) :- S is the list of all leaves of the binary tree T
+
+(define (leaves tree)
+	(if (eq? tree 'nil) '()
+		(let ([left (cadr tree)]
+		      [right (caddr tree)])
+		     (if (and (eq? left 'nil) (eq? right 'nil))
+				 (list tree)
+			  (append (leaves left) (leaves right))))))
+			  
+			  
+;P62 (*) Collect the internal nodes of a binary tree in a list
+;An internal node of a binary tree has either one or two non-empty successors. 
+;Write a predicate internals/2 to collect them in a list. 
+;% internals(T,S) :- S is the list of internal nodes of the binary tree T.
+
+(define (internals tree)
+	(if (eq? tree 'nil) '()
+		(let ([left (cadr tree)]
+		      [right (caddr tree)])
+		     (if (not (and (eq? left 'nil) (eq? right 'nil)))
+				 (append (internals left) (internals right) (list (list (car tree) 'nil 'nil)))
+				 '()))))		  	   		  	
+
