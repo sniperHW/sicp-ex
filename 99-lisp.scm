@@ -710,5 +710,112 @@
 		      [right (caddr tree)])
 		     (if (not (and (eq? left 'nil) (eq? right 'nil)))
 				 (append (internals left) (internals right) (list (list (car tree) 'nil 'nil)))
-				 '()))))		  	   		  	
+				 '()))))
+				 
+				 
+;P62B (*) Collect the nodes at a given level in a list
+;A node of a binary tree is at level N if the path from the root to the node has length N-1. 
+;The root node is at level 1. Write a predicate atlevel/3 to collect all nodes at a given level in a list. 
 
+;% atlevel(T,L,S) :- S is the list of nodes of the binary tree T at level L
+
+;Using atlevel/3 it is easy to construct a predicate levelorder/2 which creates the level-order sequence 
+;of the nodes. However, there are more efficient ways to do that.				 		  	   		  	
+
+(define (atlevel tree l)
+	(define (iter tree cur-l)
+		(cond [(eq? tree 'nil) '()]
+			  [(= l cur-l) (list (list (car tree) 'nil 'nil))]
+			  [else (append (iter (cadr tree) (+ cur-l 1)) (iter (caddr tree) (+ cur-l 1)))]))
+	(iter tree 1))
+	
+
+;广度优先	
+(define (levelorder tree)
+	(define (travel travel-que result)
+		(if (null? travel-que) result
+			(let ([mid-result 
+			       (foldr (lambda (x acc)
+						(if (not (eq? x 'nil))
+							(list (cons (cadr x) (cons (caddr x) (car acc)))
+							      (cons (car x) (cadr acc)))
+							acc)) '(()()) travel-que)])			
+				 (append result (travel (car mid-result) (cadr mid-result))))))
+	 (travel (list tree) '()))   						
+											
+;P63 (**) Construct a complete binary tree
+;A complete binary tree with height H is defined as follows: The levels 1,2,3,...,H-1 contain the maximum number of nodes 
+;(i.e 2**(i-1) at the level i, note that we start counting the levels from 1 at the root). 
+;In level H, which may contain less than the maximum possible number of nodes, all the nodes are "left-adjusted". 
+;This means that in a levelorder tree traversal all internal nodes come first, the leaves come second, and empty successors 
+;(the nil's which are not really nodes!) come last.
+
+;Particularly, complete binary trees are used as data structures (or addressing schemes) for heaps.
+
+;We can assign an address number to each node in a complete binary tree by enumerating the nodes in levelorder,
+; starting at the root with number 1. In doing so, we realize that for every node X with address A the following property holds: 
+;The address of X's left and right successors are 2*A and 2*A+1, respectively, supposed the successors do exist. 
+;This fact can be used to elegantly construct a complete binary tree structure. Write a predicate complete-binary-tree/2 with the following specification: 
+
+;% complete-binary-tree(N,T) :- T is a complete binary tree with N nodes. (+,?)
+
+;Test your predicate in an appropriate way.	
+
+(define (height tree)
+	(if (or (null? tree) (eq? tree 'nil)) 0
+		(+ 1 (max (height (cadr tree)) (height (caddr tree)))))) 
+
+;判断一棵树是否满二叉树
+(define (full-binary-tree? tree)
+	(= (countNode tree) (maxNodes (height tree))))
+
+
+;添加子节点规则
+;1) 左右子树节点数量一致往左
+;2) 左子树非满往左
+;3) 其它情况往右
+(define (addNode tree n)
+	(if (or (null? tree) (eq? tree 'nil)) (list n 'nil 'nil)
+		(let ([left-full (full-binary-tree? (cadr tree))]
+		      [left-size (countNode (cadr tree))]
+			  [right-size (countNode (caddr tree))])			 
+			 (if (or (= left-size right-size) (not left-full)) 						
+			    (list (car tree) (addNode (cadr tree) n) (caddr tree))
+			    (list (car tree) (cadr tree) (addNode (caddr tree) n))))));往右子树	
+			    
+(define (complete-binary-tree n)
+	(foldl (lambda (acc x)
+			 (addNode acc x)) '() (range 1 n)))
+
+
+;一棵树是完全二叉树的条件
+;1) 满二叉树
+;2) 左子树是高度为h-1的完全二叉树且右子树是高度为h-2的满二叉树
+;3) 左子树是高度为h-1的满二叉树,且右子树是高度为h-1的完全二叉树 
+
+(define (complete-binary-tree? tree)
+	(if (full-binary-tree? tree) #t
+		(let ([h (height tree)]
+		      [h-left (height (cadr tree))]
+		      [h-right (height (caddr tree))])
+		 (cond [(and (= h-left (- h 1)) (complete-binary-tree? (cadr tree));左子树是高度为h-1的完全二叉树
+                     (= h-right (- h 2)) (full-binary-tree? (caddr tree))) #t];右子树是高度为h-2的满二叉树
+			   [(and (= h-left (- h 1)) (full-binary-tree? (cadr tree));左子树是高度为h-1的满二叉树   
+                     (= h-right (- h 1)) (complete-binary-tree? (caddr tree))) #t];右子树是高度为h-1的完全二叉树 
+               [else #f]))))
+
+
+;P64 (**) Layout a binary tree (1)
+;(W,X,Y,L,R) represents a (non-empty) binary tree with root W "positioned" at (X,Y), and subtrees L and R
+(define (layout-binary-tree tree)
+	(define (layout tree h order)
+		(if (eq? tree 'nil) 'nil
+			(let* ([layout-left (layout (cadr tree) (+ h 1) order)]
+			       [self-order (if (eq? layout-left 'nil) order (+ (car layout-left) 1))]
+			       [layout-right (layout (caddr tree) (+ h 1) (+ self-order 1))]
+			       [maxorder (if (eq? layout-right 'nil) self-order (car layout-right))])
+			       (list maxorder (car tree) self-order h 
+								  (if (eq? layout-left 'nil ) 'nil (cdr layout-left)) 
+								  (if (eq? layout-right 'nil) 'nil (cdr layout-right))))))
+	(cdr (layout tree 0 1 )))		          
+			        
