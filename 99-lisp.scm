@@ -818,4 +818,33 @@
 								  (if (eq? layout-left 'nil ) 'nil (cdr layout-left)) 
 								  (if (eq? layout-right 'nil) 'nil (cdr layout-right))))))
 	(cdr (layout tree 0 1 )))		          
-			        
+
+;P65 (**) Layout a binary tree (2)
+;An alternative layout method is depicted in the illustration opposite. Find out the rules and write the corresponding Prolog predicate.
+; Hint: On a given level, the horizontal distance between neighboring nodes is constant.
+
+;Use the same conventions as in problem P64 and test your predicate in an appropriate way. 			        
+
+;最低一层子节点与父节点横坐标差为1,次低层为2,次次低层为4依次类推
+
+(define (layout-binary-tree2 tree)
+	(define maxhight (height tree))
+	(define hightdelta (append (foldl (lambda (acc x) (cons (exponent 2 x) acc)) '() (range 0 (- maxhight 2))) '(0)));层级横坐标数组	
+	;layout,如果c为0,表示当前节点的x坐标值尚未确定,需要根据layout-left来确定
+	(define (layout tree h c)
+		(if (eq? tree 'nil) 'nil
+			(let* ([layout-left (layout (cadr tree) (+ h 1) (if (> c 0) (- c (element-at hightdelta (+ h 1))) c))]
+			       [self-c (cond [(= 0 c)
+			                      (if (eq? layout-left 'nil) 1
+			                          (+ (car layout-left) (element-at hightdelta (+ h 1))))]
+			                     [else c])]
+				    [layout-right (layout (caddr tree) (+ h 1) (+ self-c (element-at hightdelta (+ h 1))))])
+				   (list self-c (car tree) self-c h 
+						  (if (eq? layout-left 'nil ) 'nil (cdr layout-left)) 
+						  (if (eq? layout-right 'nil) 'nil (cdr layout-right))))))					  					    			    
+	(cdr (layout tree 0 0)))
+
+;测试用例	
+;(layout-binary-tree2 '(k (c (a nil nil) (e (d nil nil) (g nil nil))) (m nil nil)))
+;(layout-binary-tree2 '(c (a nil nil) (e (d nil nil) (g nil nil))))
+;(layout-binary-tree2 '(n (k (c (a nil nil) (e (d nil nil) (g nil nil))) (m nil nil)) (u (p nil (q nil nil)) nil)))
