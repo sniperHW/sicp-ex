@@ -807,17 +807,16 @@
 
 ;P64 (**) Layout a binary tree (1)
 ;(W,X,Y,L,R) represents a (non-empty) binary tree with root W "positioned" at (X,Y), and subtrees L and R
+
 (define (layout-binary-tree tree)
 	(define (layout tree h order)
-		(if (eq? tree 'nil) 'nil
+		(if (eq? tree 'nil) (list 0 'nil)
 			(let* ([layout-left (layout (cadr tree) (+ h 1) order)]
-			       [self-order (if (eq? layout-left 'nil) order (+ (car layout-left) 1))]
+			       [self-order (if (= (car layout-left) 0) order (+ (car layout-left) 1))]
 			       [layout-right (layout (caddr tree) (+ h 1) (+ self-order 1))]
-			       [maxorder (if (eq? layout-right 'nil) self-order (car layout-right))])
-			       (list maxorder (car tree) self-order h 
-								  (if (eq? layout-left 'nil ) 'nil (cdr layout-left)) 
-								  (if (eq? layout-right 'nil) 'nil (cdr layout-right))))))
-	(cdr (layout tree 0 1 )))		          
+			       [maxorder (if (= (car layout-right) 0) self-order (car layout-right))])
+			       (list maxorder (car tree) self-order h (cdr layout-left) (cdr layout-right)))))
+	(cdr (layout tree 1 1 )))				          
 
 ;P65 (**) Layout a binary tree (2)
 ;An alternative layout method is depicted in the illustration opposite. Find out the rules and write the corresponding Prolog predicate.
@@ -829,20 +828,23 @@
 
 (define (layout-binary-tree2 tree)
 	(define maxhight (height tree))
-	(define hightdelta (append (foldl (lambda (acc x) (cons (exponent 2 x) acc)) '() (range 0 (- maxhight 2))) '(0)));层级横坐标数组	
+	(define hightdelta (append (foldl (lambda (acc x) (cons (exponent 2 x) acc))
+							   '() (range 0 (- maxhight 1))) '(0)));层级横坐标数组	
 	;layout,如果c为0,表示当前节点的x坐标值尚未确定,需要根据layout-left来确定
 	(define (layout tree h c)
-		(if (eq? tree 'nil) 'nil
-			(let* ([layout-left (layout (cadr tree) (+ h 1) (if (> c 0) (- c (element-at hightdelta (+ h 1))) c))]
+		(if (eq? tree 'nil) (list 0 'nil)
+			(let* ([layout-left (layout (cadr tree) (+ h 1) 
+								        (if (> c 0) 
+											(- c (element-at hightdelta (+ h 1))) 
+											c))]
 			       [self-c (cond [(= 0 c)
-			                      (if (eq? layout-left 'nil) 1
+			                      (if (= (car layout-left) 0) 1
 			                          (+ (car layout-left) (element-at hightdelta (+ h 1))))]
 			                     [else c])]
-				    [layout-right (layout (caddr tree) (+ h 1) (+ self-c (element-at hightdelta (+ h 1))))])
-				   (list self-c (car tree) self-c h 
-						  (if (eq? layout-left 'nil ) 'nil (cdr layout-left)) 
-						  (if (eq? layout-right 'nil) 'nil (cdr layout-right))))))					  					    			    
-	(cdr (layout tree 0 0)))
+				    [layout-right (layout (caddr tree) (+ h 1) 
+								  (+ self-c (element-at hightdelta (+ h 1))))])
+				   (list self-c (car tree) self-c h (cdr layout-left) (cdr layout-right)))))  					  					    			    
+	(cdr (layout tree 1 0)))
 
 ;测试用例	
 ;(layout-binary-tree2 '(k (c (a nil nil) (e (d nil nil) (g nil nil))) (m nil nil)))
@@ -863,17 +865,25 @@
 
 ;Which layout do you like most? 
 
-;计算左子树的最右横坐标x1,计算右子树的最左横坐标x2,当前节点的横坐标为x1+(x2-x1/2)
-
-(define (layout-binary-tree3 tree)
-	(define (layout tree h c)
-		(if (eq? tree 'nil) (list c 'nil)
-			(let* ([layout-left (layout (cadr tree) (+ h 1) (- c 1))]
-			       [layout-right (layout (caddr tree) (+ h 1) (+ (car layout-left) 2))]
-			       [self-c (if (>= 0 (car layout-left)) 1 (+ (car layout-left) (/ (- (car layout-right) (car layout-left)) 2)))])
-				   (begin (display (car tree))(display c)(display "\n")
-				  (list self-c (list (car tree) self-c h (cadr layout-left) (cadr layout-right)))))))
-	(cadr (layout tree 0 1)))
+;(define (layout-binary-tree3 tree)
+;	(define (layout tree h c)
+;		(if (eq? tree 'nil) (list (max c 0) 'nil)
+;			(let* ([layout-left (layout (cadr tree) (+ h 1) (- c 1))]
+;				   [self-c (+ (car layout-left) 1)]	
+ ;                  [layout-right (layout (caddr tree) (+ h 1) (+ self-c 1))] 
+	;			   [max-x (if (eq? (cadr layout-right) 'nil) self-c (car layout-right))])
+	;			   (begin (display (car tree))(display c)(display "\n")
+	;			  (list max-x (list (car tree) self-c h (cadr layout-left) (cadr layout-right)))))))
+	 ;	(cadr (layout tree 0 1)))		    		
+;(define (layout-binary-tree3 tree)
+;	(define (layout tree h c)
+;		(if (eq? tree 'nil) (list c 'nil)
+;			(let* ([layout-left (layout (cadr tree) (+ h 1) (- c 1))]
+;			       [layout-right (layout (caddr tree) (+ h 1) (+ (car layout-left) 2))]
+;			       [self-c (if (>= 0 (car layout-left)) 1 (+ (car layout-left) (/ (- (car layout-right) (car layout-left)) 2)))])
+;				   (begin (display (car tree))(display c)(display "\n")
+;				  (list self-c (list (car tree) self-c h (cadr layout-left) (cadr layout-right)))))))
+;	(cadr (layout tree 0 1)))
 
 ;测试用例	
 ;(layout-binary-tree3 '(k (c (a nil nil) (e (d nil nil) (g nil nil))) (m nil nil)))
