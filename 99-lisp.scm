@@ -848,3 +848,35 @@
 ;(layout-binary-tree2 '(k (c (a nil nil) (e (d nil nil) (g nil nil))) (m nil nil)))
 ;(layout-binary-tree2 '(c (a nil nil) (e (d nil nil) (g nil nil))))
 ;(layout-binary-tree2 '(n (k (c (a nil nil) (e (d nil nil) (g nil nil))) (m nil nil)) (u (p nil (q nil nil)) nil)))
+
+
+
+
+;P66 (***) Layout a binary tree (3)
+;Yet another layout strategy is shown in the illustration opposite. The method yields a very compact layout while 
+;maintaining a certain symmetry in every node. Find out the rules and write the corresponding Prolog predicate. 
+;Hint: Consider the horizontal distance between a node and its successor nodes. How tight can you pack together 
+;two subtrees to construct the combined binary tree?
+
+;Use the same conventions as in problem P64 and P65 and test your predicate in an appropriate way. 
+;Note: This is a difficult problem. Don't give up too early!
+
+;Which layout do you like most? 
+
+;计算左子树的最右横坐标x1,计算右子树的最左横坐标x2,当前节点的横坐标为x1+(x2-x1/2)
+
+(define (layout-binary-tree3 tree)
+	(define (layout tree h c)
+		(if (eq? tree 'nil) (list c 'nil)
+			(let* ([layout-left (layout (cadr tree) (+ h 1) (- c 1))]
+			       [layout-right (layout (caddr tree) (+ h 1) (+ (car layout-left) 2))]
+			       [self-c (if (>= 0 (car layout-left)) 1 (+ (car layout-left) (/ (- (car layout-right) (car layout-left)) 2)))])
+				   (begin (display (car tree))(display c)(display "\n")
+				  (list self-c (list (car tree) self-c h (cadr layout-left) (cadr layout-right)))))))
+	(cadr (layout tree 0 1)))
+
+;测试用例	
+;(layout-binary-tree3 '(k (c (a nil nil) (e (d nil nil) (g nil nil))) (m nil nil)))
+;(layout-binary-tree3 '(c (a nil nil) (e (d nil nil) (g nil nil))))
+;(layout-binary-tree3 '(n (k (c (a nil nil) (e (d nil nil) (g nil nil))) (m nil nil)) (u (p nil (q nil nil)) nil)))
+;(layout-binary-tree3 '(a (b nil (c nil nil)) nil))
