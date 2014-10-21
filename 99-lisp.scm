@@ -885,6 +885,23 @@
 ;				  (list self-c (list (car tree) self-c h (cadr layout-left) (cadr layout-right)))))))
 ;	(cadr (layout tree 0 1)))
 
+
+(define (layout-binary-tree3 tree)
+	(define (layout tree h c maxright)
+		(if (not (eq? tree 'nil)) (begin (display (car tree))(display c)(display "\n")))
+		(if (eq? tree 'nil) (list 'nil c maxright)
+			(let* ([layout-left (layout (cadr tree) (+ h 1) (if (> c 1) (- c 1) 1) maxright)]
+			          [c-left (cadr layout-left)]
+			          [maxright-left (caddr layout-left)]		
+			          [layout-right (layout (caddr tree) (+ h 1)  (+ c-left 2) maxright-left)]
+			          [c-right (cadr layout-right)]
+			          [maxright-right (caddr layout-right)]				        
+			          [self-c (let ([tmp (if (not (eq? (car layout-right) 'nil)) (+ c-left (/ (- c-right c-left) 2)) c-left)])
+			          	       	(if (> maxright-left tmp) maxright-left tmp))])
+			          (display (car tree))(display c-right)(display c-left)(display "\n")
+			          (list (list (car tree) self-c h (car layout-left) (car layout-right)) self-c maxright-right))))
+	(car (layout tree 1 1 1)))
+
 ;测试用例	
 ;(layout-binary-tree3 '(k (c (a nil nil) (e (d nil nil) (g nil nil))) (m nil nil)))
 ;(layout-binary-tree3 '(c (a nil nil) (e (d nil nil) (g nil nil))))
