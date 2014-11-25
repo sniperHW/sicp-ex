@@ -863,27 +863,44 @@
 ;Use the same conventions as in problem P64 and P65 and test your predicate in an appropriate way. 
 ;Note: This is a difficult problem. Don't give up too early!
 
-;Which layout do you like most? 
+;Which layout do you like most?
 
-;(define (layout-binary-tree3 tree)
-;	(define (layout tree h c)
-;		(if (eq? tree 'nil) (list (max c 0) 'nil)
-;			(let* ([layout-left (layout (cadr tree) (+ h 1) (- c 1))]
-;				   [self-c (+ (car layout-left) 1)]	
- ;                  [layout-right (layout (caddr tree) (+ h 1) (+ self-c 1))] 
-	;			   [max-x (if (eq? (cadr layout-right) 'nil) self-c (car layout-right))])
-	;			   (begin (display (car tree))(display c)(display "\n")
-	;			  (list max-x (list (car tree) self-c h (cadr layout-left) (cadr layout-right)))))))
-	 ;	(cadr (layout tree 0 1)))		    		
-;(define (layout-binary-tree3 tree)
-;	(define (layout tree h c)
-;		(if (eq? tree 'nil) (list c 'nil)
-;			(let* ([layout-left (layout (cadr tree) (+ h 1) (- c 1))]
-;			       [layout-right (layout (caddr tree) (+ h 1) (+ (car layout-left) 2))]
-;			       [self-c (if (>= 0 (car layout-left)) 1 (+ (car layout-left) (/ (- (car layout-right) (car layout-left)) 2)))])
-;				   (begin (display (car tree))(display c)(display "\n")
-;				  (list self-c (list (car tree) self-c h (cadr layout-left) (cadr layout-right)))))))
-;	(cadr (layout tree 0 1)))
+;1) 如果有左子树和右子树 根节点 = (右子树-左子树)/2 + 左子树
+;2) 如果有左子树 根节点 = 左子树 + 1
+;3) 如果有右子树 根节点 = c
+
+(define (layout-binary-tree3 tree)
+	;用于检测一个节点是否与已经就位的节点产生冲突
+	(define (check-collision trees x y)
+		(define (match? tree exit)
+ 			(if (eq? 'nil tree) 'nil
+			     (begin
+			     	(if (and (eq? x (cadr tree)) (eq? y (caddr tree))) (exit x))
+			 	(match? (cadddr tree) exit)    	
+			 	(match? (car (cddddr tree)) exit))))
+		(define (iter xs exit)
+			(if (null? xs) 'nil
+			     (begin (match? (car xs) exit)
+			     	   (iter (cdr xs) exit))))
+		(call/cc (lambda (exit) (iter trees exit))))
+	;用于将子树中所有节点x坐标移动2个位置
+	(define (shift tree)
+		(if (eq? 'nil tree) 'nil
+		    (list  (car tree) (+ 2 (cadr tree)) (caddr tree) (shift (cadddr tree)) (shift (car (cddddr tree))))))
+	(define (layout tree h c siblings)
+		(if (eq? tree 'nil) 'nil
+		     (let* ([layout-left (layout (cadr tree) (+ h 1) (if (> c 1) (- c 1) c) siblings)] 
+                                          [left-c (if (eq? 'nil layout-left) c (cadr layout-left))] 
+                                          [layout-right (layout (caddr tree) (+ h 1) (if (eq? 'nil layout-left) (+ 1 left-c) (+ 2 left-c)) (cons layout-left siblings))]
+			[right-c (if (eq? 'nil layout-right) c (cadr layout-right))] 	 
+		     	[self-c (if (and (not (eq? 'nil layout-left)) (not (eq? 'nil layout-right))) (+ (/ (- right-c left-c) 2) left-c)
+                                     		  (if (eq? 'nil layout-left) c  (+ left-c 1)))]
+		     	[self-h (+ h 1)])
+		     	(if (not (eq? 'nil (check-collision siblings self-c self-h)))
+		     	     ;如果当前节点与已经就位的节点位置产生冲突,则对它的左右子树都调用shift
+		                   (list (car tree) (+ self-c 2) self-h  (shift layout-left) (shift layout-right))
+		                   (list (car tree) self-c self-h  layout-left layout-right)))))
+	(layout tree 0 1 '()))
 
 ;测试用例	
 ;(layout-binary-tree3 '(k (c (a nil nil) (e (d nil nil) (g nil nil))) (m nil nil)))
