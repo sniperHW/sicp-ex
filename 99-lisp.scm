@@ -907,3 +907,104 @@
 ;(layout-binary-tree3 '(c (a nil nil) (e (d nil nil) (g nil nil))))
 ;(layout-binary-tree3 '(n (k (c (a nil nil) (e (d nil nil) (g nil nil))) (m nil nil)) (u (p nil (q nil nil)) nil)))
 ;(layout-binary-tree3 '(a (b nil (c nil nil)) nil))
+
+
+;P67 (**) A string representation of binary trees
+;Somebody represents binary trees as strings of the following type (see example opposite):
+
+;a(b(d,e),c(,f(g,)))
+
+;a) Write a Prolog predicate which generates this string representation, if the tree is given as usual (as nil or t(X,L,R) term). 
+;Then write a predicate which does this inverse; i.e. given the string representation, construct the tree in the usual form. Finally, 
+;combine the two predicates in a single predicate tree-string/2 which can be used in both directions.
+
+;b) Write the same predicate tree-string/2 using difference lists and a single predicate tree-dlist/2 which does the conversion 
+;between a tree and a difference list in both directions.
+
+;For simplicity, suppose the information in the nodes is a single letter and there are no spaces in the string. 
+
+(define (tree->string tree)
+	(if (eq? 'nil tree) ""
+		(let* ([node (car tree)]
+			   [left (cadr tree)]
+			   [right (caddr tree)])
+			  (if (and (eq? 'nil left) (eq? 'nil right)) node
+					(string-append node "(" (tree->string left) "," (tree->string right) ")")))))
+
+;(tree->string '("a" ("b" ("d" nil nil) ("e" nil nil)) ("c" nil ("f" ("g" nil nil) nil))))
+
+(define (string->tree str)
+	(define (string-split s)
+		(define (mysubstring s start end)
+				(cond [(eq? 0 end) ""]
+					  [(eq? (string-length s) start) ""]
+					  [else (substring s start end)]))
+		(define (find-split-index meet-l-bracket meet-r-bracket idx exit)
+			(let ([c (string-ref s idx)])
+				(cond [(eq? c #\,) 
+						(if (or (not meet-l-bracket) meet-r-bracket) (exit idx)
+							(find-split-index meet-l-bracket meet-r-bracket (+ idx 1) exit))]
+					  [(eq? c #\() (find-split-index #t meet-r-bracket (+ idx 1) exit)]
+					  [(eq? c #\)) (find-split-index meet-l-bracket #t (+ idx 1) exit)]
+					  [else (find-split-index meet-l-bracket meet-r-bracket (+ idx 1) exit)] 
+					  )))
+		;(string-split "b(d,e),c(,f(g,))")
+		;=>("b(d,e)" "c(,f(g,))")			  
+		(let* ([idx (call/cc (lambda (exit) (find-split-index #f #f 0 exit)))]  			  
+			   [fst (mysubstring s 0 idx)]		  
+			   [snd (mysubstring s (+ idx 1) (string-length s))])		  
+			   (list fst snd)))
+	(cond [(string=? str "") 'nil]
+		  [(eq? (string-length str) 1) (list str 'nil 'nil)]
+		  [else (let* ([node (substring str 0 1)] 
+					   [splitstr (string-split (substring str 2 (- (string-length str) 1)))]
+					   [left-str (car splitstr)]
+					   [right-str(cadr splitstr)])
+				 (list node (string->tree left-str) (string->tree right-str)))]))
+
+;(string->tree "a(b(d,e),c(,f(g,)))")
+
+(define (tree<->string input)
+	(cond [(string? input) (string->tree input)]
+		  [(list? input) (tree->string input)]
+		  [else 'nil]))
+		  
+		  
+		  					
+ 					 
+;P68 (**) Preorder and inorder sequences of binary trees
+;We consider binary trees with nodes that are identified by single lower-case letters, as in the example of problem P67.
+
+;a) Write predicates preorder/2 and inorder/2 that construct the preorder and inorder sequence of a given binary tree, 
+;respectively. The results should be atoms, e.g. 'abdecfg' for the preorder sequence of the example in problem P67.
+
+;b) Can you use preorder/2 from problem part a) in the reverse direction; i.e. given a preorder sequence, construct a 
+;corresponding tree? If not, make the necessary arrangements.
+
+;c) If both the preorder sequence and the inorder sequence of the nodes of a binary tree are given, then the tree is 
+;determined unambiguously. Write a predicate pre-in-tree/3 that does the job.
+
+;d) Solve problems a) to c) using difference lists. Cool! Use the predefined predicate time/1 to compare the solutions.
+
+;What happens if the same character appears in more than one node. Try for instance pre-in-tree(aba,baa,T).	
+
+
+(define (preorder tree)
+	(if (eq? tree 'nil) ""
+		(string-append (car tree) (preorder (cadr tree)) (preorder (caddr tree)))))
+
+;(preorder '("a" ("b" ("d" nil nil) ("e" nil nil)) ("c" nil ("f" ("g" nil nil) nil))))
+
+(define (inorder tree)
+	(if (eq? tree 'nil) ""
+		(string-append (inorder (cadr tree)) (car tree) (inorder (caddr tree)))))
+;(inorder '("a" ("b" ("d" nil nil) ("e" nil nil)) ("c" nil ("f" ("g" nil nil) nil))))
+
+;input: preorder sequence
+;output: binary tree
+;(define (build-preorder pre-str)
+;)
+
+;input: inorder sequence
+;output: binary tree
+;(define (build-inorder in-str))
