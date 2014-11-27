@@ -907,6 +907,7 @@
 ;(layout-binary-tree3 '(c (a nil nil) (e (d nil nil) (g nil nil))))
 ;(layout-binary-tree3 '(n (k (c (a nil nil) (e (d nil nil) (g nil nil))) (m nil nil)) (u (p nil (q nil nil)) nil)))
 ;(layout-binary-tree3 '(a (b nil (c nil nil)) nil))
+;(layout-binary-tree3 '(6 (5 (1 nil (3 (2 nil nil) (4 nil nil))) nil) (10 (8 (7 nil nil) (9 nil nil)) (11 nil nil))))
 
 
 ;P67 (**) A string representation of binary trees
