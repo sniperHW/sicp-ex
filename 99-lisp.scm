@@ -1002,9 +1002,72 @@
 
 ;input: preorder sequence
 ;output: binary tree
-;(define (build-preorder pre-str)
-;)
+;'abdecfg'
+(define (build-preorder pre-str)
+		(let* ([len (string-length pre-str)]
+			   [c (if (> len 0) (substring pre-str 0 1) "")])
+			(cond [(eq? len 0) '(nil nil)]
+				  [(eq? len 1) (cons c (build-preorder ""))]
+				  [(eq? len 2) (list c (build-preorder (substring pre-str 1 2)) 'nil)]
+				  [else (list c 
+							  (build-preorder (substring pre-str 1 2))
+							  (build-preorder (substring pre-str 2 len)))]))) 
 
-;input: inorder sequence
-;output: binary tree
-;(define (build-inorder in-str))
+;(build-preorder "abdecfg")
+
+;1)寻找根节点,在in-str中寻找pre-str中的第一个元素,此元素即为根节点
+;2)将in-str从分成两份例如"dbeacgf"-> "dbe" "cgf"
+;3)将pre-str也分成对应数量的两份例如"abdecfg" -> "bde" "cfg"
+;4)在两个子串上递归
+
+(define (pre-in-tree pre-str in-str)
+	(define (mysubstring s start end)
+			(cond [(eq? 0 end) ""]
+				  [(eq? (string-length s) start) ""]
+				  [else (substring s start end)]))
+	(define (find-root c in-str idx exit)
+		(if (> idx (string-length in-str)) 'nil
+			(if (eq? c (string-ref in-str idx)) (exit idx)
+				(find-root c in-str (+ idx 1) exit))))
+	(let ([len-pre (string-length pre-str)]
+		  [len-in (string-length in-str)])
+	(if (not (eq? len-pre len-in)) 'nil
+		(cond [(eq? 0 len-pre) 'nil]
+			  [(eq? 1 len-pre) (list pre-str 'nil 'nil)]
+			  [else (let ([root-idx (call/cc (lambda (exit) (find-root (string-ref pre-str 0) in-str 0 exit)))])
+					(if (eq? root-idx 'nil) 'nil
+						(let* ([root (substring pre-str 0 1)]
+							   [sub-in1 (mysubstring in-str 0 root-idx)]
+							   [sub-in2 (mysubstring in-str (+ root-idx 1) (string-length in-str))]
+							   [sub-pre1 (mysubstring pre-str 1 (+ 1 (string-length sub-in1)))] 
+							   [sub-pre2 (mysubstring pre-str (+ 1 (string-length sub-in1)) (string-length pre-str))]) 	
+							   (list root (pre-in-tree sub-pre1 sub-in1)
+							   			  (pre-in-tree sub-pre2 sub-in2)))))]))))
+;(pre-in-tree "abdecfg" "dbeacgf")
+
+;P69 (**) Dotstring representation of binary trees
+;We consider again binary trees with nodes that are identified by single lower-case letters,
+;as in the example of problem P67. Such a tree can be represented by the preorder sequence of its 
+;nodes in which dots (.) are inserted where an empty subtree (nil) is encountered during the tree traversal. 
+;For example, the tree shown in problem P67 is represented as 'abd..e..c.fg...'. 
+;First, try to establish a syntax (BNF or syntax diagrams) and then write a predicate tree-dotstring/2 which 
+;does the conversion in both directions. Use difference lists.
+
+(define (tree->dotstring tree)
+	(if (eq? tree 'nil) "."
+		(string-append (car tree) (tree->dotstring (cadr tree)) (tree->dotstring (caddr tree)))))
+
+;(tree-dotstring '("a" ("b" ("d" nil nil) ("e" nil nil)) ("c" nil ("f" ("g" nil nil) nil))))
+
+(define (dotstring->tree dotstr)
+	(define (process dotstr)
+		(let ([c (substring dotstr 0 1)])
+			 (if (string=? "." c) (list (substring dotstr 1 (string-length dotstr)) 'nil)
+			  (let* ([left (process (substring dotstr 1 (string-length dotstr)))]
+					 [right (process (car left))])
+					(list (car right) (list c (cadr left) (cadr right)))))))
+	(cadr (process dotstr))) 
+			
+		
+;(dotstring->tree "abd..e..c.fg...")
+
