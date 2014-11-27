@@ -876,8 +876,8 @@
  			(if (eq? 'nil tree) 'nil
 			     (begin
 			     	(if (and (eq? x (cadr tree)) (eq? y (caddr tree))) (exit x))
-			 	(match? (cadddr tree) exit)    	
-			 	(match? (car (cddddr tree)) exit))))
+					(match? (cadddr tree) exit)    	
+					(match? (car (cddddr tree)) exit))))
 		(define (iter xs exit)
 			(if (null? xs) 'nil
 			     (begin (match? (car xs) exit)
@@ -890,12 +890,16 @@
 	(define (layout tree h c siblings)
 		(if (eq? tree 'nil) 'nil
 		     (let* ([layout-left (layout (cadr tree) (+ h 1) (if (> c 1) (- c 1) c) siblings)] 
-                                          [left-c (if (eq? 'nil layout-left) c (cadr layout-left))] 
-                                          [layout-right (layout (caddr tree) (+ h 1) (if (eq? 'nil layout-left) (+ 1 left-c) (+ 2 left-c)) (cons layout-left siblings))]
-			[right-c (if (eq? 'nil layout-right) c (cadr layout-right))] 	 
-		     	[self-c (if (and (not (eq? 'nil layout-left)) (not (eq? 'nil layout-right))) (+ (/ (- right-c left-c) 2) left-c)
-                                     		  (if (eq? 'nil layout-left) c  (+ left-c 1)))]
-		     	[self-h (+ h 1)])
+                    [left-c (if (eq? 'nil layout-left) c (cadr layout-left))] 
+                    [layout-right (layout (caddr tree) 
+										  (+ h 1) 
+										  (if (eq? 'nil layout-left) (+ 1 left-c) (+ 2 left-c)) 
+										  (cons layout-left siblings))]
+					[right-c (if (eq? 'nil layout-right) c (cadr layout-right))] 	 
+					[self-c (if (and (not (eq? 'nil layout-left)) (not (eq? 'nil layout-right))) 
+								(+ (/ (- right-c left-c) 2) left-c)
+                                (if (eq? 'nil layout-left) c  (+ left-c 1)))]
+		     	    [self-h (+ h 1)])
 		     	(if (not (eq? 'nil (check-collision siblings self-c self-h)))
 		     	     ;如果当前节点与已经就位的节点位置产生冲突,则对它的左右子树都调用shift
 		                   (list (car tree) (+ self-c 2) self-h  (shift layout-left) (shift layout-right))
