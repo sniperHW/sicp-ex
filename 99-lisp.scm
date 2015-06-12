@@ -1076,3 +1076,10 @@
 		
 ;(dotstring->tree "abd..e..c.fg...")
 
+;input:  a binary-tree
+;output: a binary-tree that swap left and rigt subtree
+;(swap '("a" ("b" ("d" nil nil) ("e" nil nil))("c" nil ("f" ("g" nil nil) nil))))
+(define (swap tree)
+	(cond [(eq? tree 'nil) tree]
+		  [(and (eq? (cadr tree) 'nil) (eq? (caddr tree) 'nil)) tree]
+		  [else (list (car tree) (swap (caddr tree)) (swap (cadr tree)))]))
